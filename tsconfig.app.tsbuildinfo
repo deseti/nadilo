@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/game.tsx","./src/game/gamescene.ts","./src/game/menuscene.ts","./src/game/player.ts","./src/game/token.ts","./src/game/index.ts","./src/lib/supabase.ts","./src/services/leaderboard.ts"],"version":"5.8.3"}

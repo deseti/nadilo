@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@privy-io/react-auth": "^2.21.2",
+    "@supabase/supabase-js": "^2.55.0",
     "axios": "^1.11.0",
     "phaser": "^3.90.0",
     "react": "^19.1.1",
