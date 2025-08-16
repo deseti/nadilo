@@ -82,6 +82,13 @@ export async function updatePlayerData(
   transactionAmount: number
 ) {
   try {
+    console.log('Starting score submission:', {
+      playerAddress,
+      scoreAmount,
+      transactionAmount,
+      contractAddress: MONAD_LEADERBOARD_CONTRACT_ADDRESS
+    });
+
     const walletClient = createWalletClientFromProvider();
     const [account] = await walletClient.getAddresses();
     
@@ -89,6 +96,15 @@ export async function updatePlayerData(
       throw new Error('No wallet account found');
     }
 
+    console.log('Wallet connected:', account);
+
+    // Check if the player address is valid
+    if (!playerAddress.startsWith('0x') || playerAddress.length !== 42) {
+      throw new Error('Invalid player address format');
+    }
+
+    // Simulate the contract call first
+    console.log('Simulating contract call...');
     const { request } = await publicClient.simulateContract({
       address: MONAD_LEADERBOARD_CONTRACT_ADDRESS,
       abi: MONAD_LEADERBOARD_ABI,
@@ -97,18 +113,31 @@ export async function updatePlayerData(
       account,
     });
 
+    console.log('Simulation successful, executing transaction...');
     const hash = await walletClient.writeContract(request);
+    console.log('Transaction sent:', hash);
     
     // Tunggu transaksi selesai
+    console.log('Waiting for transaction confirmation...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    console.log('Transaction confirmed:', receipt);
     
     return {
       success: true,
       transactionHash: hash,
       receipt,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating player data:', error);
+    
+    // Log more detailed error information
+    if (error.cause) {
+      console.error('Error cause:', error.cause);
+    }
+    if (error.details) {
+      console.error('Error details:', error.details);
+    }
+    
     throw error;
   }
 }

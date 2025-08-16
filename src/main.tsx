@@ -69,8 +69,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         theme: 'dark',
         accentColor: '#676FFF',
       },
-      // Only allow email login for testing - remove wallet for now
-      loginMethods: ['email'],
+      // Support multiple login methods including Monad Games ID
+      loginMethods: ['email', 'wallet'],
+      
+      // Configure cross-app wallets for Monad Games ID
+      externalWallets: {
+        coinbaseWallet: {
+          connectionOptions: 'smartWalletOnly'
+        }
+      },
       
       // Configure wallet options
       embeddedWallets: {

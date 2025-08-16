@@ -1,14 +1,92 @@
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, type CrossAppAccountWithMetadata } from '@privy-io/react-auth';
 import { Game } from './components/Game';
 import { Leaderboard } from './components/Leaderboard';
 import { BlockchainLeaderboard } from './components/BlockchainLeaderboard';
 import { IntegrationStatus } from './components/IntegrationStatus';
+import { MonadSetupGuide } from './components/MonadSetupGuide';
 import './App.css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 function App() {
   // Main hook from Privy to access authentication status and user data
   const { ready, authenticated, login, logout, user, getAccessToken } = usePrivy();
+  
+  // State for Monad Games ID integration
+  const [monadWalletAddress, setMonadWalletAddress] = useState<string>('');
+  const [monadUsername, setMonadUsername] = useState<string>('');
+  const [hasUsername, setHasUsername] = useState<boolean>(false);
+  const [isCheckingUsername, setIsCheckingUsername] = useState<boolean>(false);
+
+  // Check for Monad Games ID cross-app account and username
+  useEffect(() => {
+    const checkMonadGamesID = async () => {
+      if (authenticated && user && ready) {
+        console.log("🔍 Checking for Monad Games ID integration...");
+        
+        // Check if user has linkedAccounts
+        if (user.linkedAccounts.length > 0) {
+          console.log("📋 User has linked accounts:", user.linkedAccounts.length);
+          
+          // Get the cross app account created using Monad Games ID
+          const crossAppAccount: CrossAppAccountWithMetadata = user.linkedAccounts.filter(
+            account => account.type === "cross_app" && 
+            account.providerApp.id === import.meta.env.VITE_MONAD_GAMES_ID
+          )[0] as CrossAppAccountWithMetadata;
+
+          if (crossAppAccount) {
+            console.log("✅ Found Monad Games ID cross-app account");
+            
+            // The first embedded wallet created using Monad Games ID, is the wallet address
+            if (crossAppAccount.embeddedWallets.length > 0) {
+              const walletAddress = crossAppAccount.embeddedWallets[0].address;
+              setMonadWalletAddress(walletAddress);
+              console.log("🔑 Monad Games ID wallet address:", walletAddress);
+              
+              // Check username
+              await checkUsername(walletAddress);
+            } else {
+              console.log("⚠️ No embedded wallets found in cross-app account");
+            }
+          } else {
+            console.log("⚠️ No Monad Games ID cross-app account found");
+          }
+        } else {
+          console.log("⚠️ User has no linked accounts");
+        }
+      }
+    };
+
+    checkMonadGamesID();
+  }, [authenticated, user, ready]);
+
+  // Function to check username from Monad Games ID API
+  const checkUsername = async (walletAddress: string) => {
+    if (!walletAddress) return;
+    
+    setIsCheckingUsername(true);
+    try {
+      console.log("🔍 Checking username for wallet:", walletAddress);
+      const response = await fetch(`https://monad-games-id-site.vercel.app/api/check-wallet?wallet=${walletAddress}`);
+      const data = await response.json();
+      
+      console.log("📊 Username check response:", data);
+      
+      if (data.hasUsername && data.user) {
+        setHasUsername(true);
+        setMonadUsername(data.user.username);
+        console.log("✅ Username found:", data.user.username);
+      } else {
+        setHasUsername(false);
+        setMonadUsername('');
+        console.log("⚠️ No username registered");
+      }
+    } catch (error) {
+      console.error("❌ Error checking username:", error);
+      setHasUsername(false);
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  };
 
   // Debug logging with useEffect to avoid too many logs
   useEffect(() => {
@@ -20,9 +98,12 @@ function App() {
         email: user.email?.address,
         wallet: user.wallet?.address,
         linkedAccounts: user.linkedAccounts?.length
-      } : null
+      } : null,
+      monadWallet: monadWalletAddress,
+      monadUsername: monadUsername,
+      hasUsername: hasUsername
     });
-  }, [ready, authenticated, user]);
+  }, [ready, authenticated, user, monadWalletAddress, monadUsername, hasUsername]);
 
   // Show loading message while Privy is initializing
   if (!ready) {
@@ -35,22 +116,51 @@ function App() {
     );
   }
 
-  // Determine the player's identifier. Use wallet address, email, or user ID as fallback
-  const playerID = user?.wallet?.address || user?.email?.address || user?.id || 'Anonymous';
+  // Determine the player's identifier. Prioritize Monad Games ID wallet, then regular wallet, email, or user ID
+  const playerID = monadWalletAddress || user?.wallet?.address || user?.email?.address || user?.id || 'Anonymous';
+  const displayName = monadUsername || user?.email?.address || user?.id || 'Anonymous';
   
-  // Game address placeholder - in production, this should be your actual game contract address
-  // For now, we'll use the leaderboard contract address as the game identifier
-  const gameAddress = '0xceCBFF203C8B6044F52CE23D914A1bfD997541A4';
+  // Game address - using your actual registered game address
+  const gameAddress = '0x5b84Dc548e45cC4f1498b95C000C748c1c953f64';
+  const leaderboardContract = '0xceCBFF203C8B6044F52CE23D914A1bfD997541A4';
 
   return (
     <div className="container">
       <header className="header">
         <h1>Nadilo - Crypto Clash</h1>
-        {/* Show Logout button only if user is logged in */}
         {authenticated && (
-          <button className="logout-button" onClick={logout}>
-            Logout
-          </button>
+          <div className="user-info">
+            {/* Show Monad Games ID status */}
+            {monadWalletAddress && (
+              <div className="monad-status">
+                {isCheckingUsername ? (
+                  <span>🔍 Checking username...</span>
+                ) : hasUsername ? (
+                  <span>🎮 {monadUsername} (Monad Games ID)</span>
+                ) : (
+                  <div>
+                    <span>⚠️ Monad Games ID connected but no username</span>
+                    <a 
+                      href="https://monad-games-id-site.vercel.app/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ 
+                        marginLeft: '10px', 
+                        color: '#676FFF',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Register Username
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+            <span className="player-id">Player: {displayName}</span>
+            <button className="logout-button" onClick={logout}>
+              Logout
+            </button>
+          </div>
         )}
       </header>
 
@@ -58,8 +168,16 @@ function App() {
         {/* If logged in, show the game. Otherwise, show the login page. */}
         {authenticated ? (
           <div className="game-wrapper">
+            {/* Monad Setup Guide */}
+            <MonadSetupGuide 
+              gameAddress={gameAddress}
+              playerAddress={monadWalletAddress || user?.wallet?.address || ''}
+              gameRegistered={true} // You've already registered
+              hasGameRole={false} // You'll need to get this permission
+            />
+            
             {/* Integration Status */}
-            <IntegrationStatus gameAddress={gameAddress} />
+            <IntegrationStatus gameAddress={leaderboardContract} />
             
             <div className="game-section">
               {/* Pass the unique playerID as a prop to the Game component */}
@@ -67,11 +185,11 @@ function App() {
             </div>
             <div className="leaderboard-section">
               <Leaderboard playerID={playerID} />
-              {/* Show blockchain leaderboard only if user has a wallet address */}
-              {user?.wallet?.address && (
+              {/* Show blockchain leaderboard if user has any wallet address */}
+              {(monadWalletAddress || user?.wallet?.address) && (
                 <BlockchainLeaderboard 
-                  playerAddress={user.wallet.address}
-                  gameAddress={gameAddress}
+                  playerAddress={monadWalletAddress || user?.wallet?.address || ''}
+                  gameAddress={leaderboardContract}
                 />
               )}
             </div>
@@ -79,26 +197,52 @@ function App() {
         ) : (
           <div className="login-container">
             <h2>Join the Battle Arena</h2>
-            <p>Sign in to start fighting and climb the leaderboard!</p>
-            <button 
-              className="login-button" 
-              onClick={async () => {
-                console.log("🚀 Starting login process...");
-                try {
-                  console.log("📞 Calling login()...");
-                  const result = await login();
-                  console.log("✅ Login result:", result);
-                } catch (error) {
-                  console.error("❌ Login error:", {
-                    message: error instanceof Error ? error.message : String(error),
-                    stack: error instanceof Error ? error.stack : undefined,
-                    name: error instanceof Error ? error.name : 'Unknown Error'
-                  });
-                }
-              }}
-            >
-              Sign In with Email
-            </button>
+            <p>Sign in with Monad Games ID to start fighting and climb the leaderboard!</p>
+            
+            <div className="login-options">
+              <button 
+                className="login-button monad-login" 
+                onClick={async () => {
+                  console.log("🚀 Starting Monad Games ID login...");
+                  try {
+                    const result = await login();
+                    console.log("✅ Login result:", result);
+                  } catch (error) {
+                    console.error("❌ Login error:", error);
+                  }
+                }}
+                style={{
+                  background: '#676FFF',
+                  border: '2px solid #676FFF',
+                  marginBottom: '10px'
+                }}
+              >
+                🎮 Sign In with Monad Games ID
+              </button>
+              
+              <button 
+                className="login-button email-login" 
+                onClick={async () => {
+                  console.log("📧 Starting email login...");
+                  try {
+                    const result = await login();
+                    console.log("✅ Login result:", result);
+                  } catch (error) {
+                    console.error("❌ Login error:", error);
+                  }
+                }}
+                style={{
+                  background: '#444',
+                  border: '2px solid #666'
+                }}
+              >
+                📧 Sign In with Email
+              </button>
+            </div>
+            
+            <p style={{ fontSize: '12px', color: '#888', marginTop: '15px' }}>
+              New to Monad Games ID? <a href="https://monad-games-id-site.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: '#676FFF' }}>Register here</a>
+            </p>
           </div>
         )}
       </main>

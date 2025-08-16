@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getPlayerData, getTotalPlayerScore } from '../lib/monadContract';
-import { isGameRegistered, getGameInfo } from '../lib/gameRegistration';
+import { isGameRegistered, getGameInfo, hasGameRole } from '../lib/gameRegistration';
 import { SubmitScore } from './SubmitScore';
+import { MonadSetupGuide } from './MonadSetupGuide';
 import './BlockchainLeaderboard.css';
 
 interface BlockchainLeaderboardProps {
@@ -30,9 +31,11 @@ export const BlockchainLeaderboard: React.FC<BlockchainLeaderboardProps> = ({
   const [totalScore, setTotalScore] = useState<number>(0);
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
+  const [userHasGameRole, setUserHasGameRole] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSubmitScore, setShowSubmitScore] = useState(false);
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
 
   useEffect(() => {
     loadPlayerData();
@@ -51,6 +54,10 @@ export const BlockchainLeaderboard: React.FC<BlockchainLeaderboardProps> = ({
       // Check if game is registered first
       const registered = await isGameRegistered(gameAddress);
       setIsRegistered(registered);
+
+      // Check if user has GAME_ROLE
+      const hasRole = await hasGameRole(playerAddress);
+      setUserHasGameRole(hasRole);
 
       if (registered) {
         // Get game information
@@ -116,12 +123,19 @@ export const BlockchainLeaderboard: React.FC<BlockchainLeaderboardProps> = ({
 
   return (
     <div className="blockchain-leaderboard">
-      <h3>⛓️ Blockchain Stats</h3>
+      <h3>⛓️ Monad Games ID Stats</h3>
       
       {!isRegistered && !loading && (
         <div className="warning-message">
           <p>⚠️ Game not registered in Monad Games ID</p>
           <p>Contact the developer to register this game</p>
+        </div>
+      )}
+
+      {!userHasGameRole && !loading && isRegistered && (
+        <div className="warning-message">
+          <p>⚠️ No GAME_ROLE permission</p>
+          <p>Need GAME_ROLE to submit scores to Monad Games ID</p>
         </div>
       )}
 
@@ -151,6 +165,13 @@ export const BlockchainLeaderboard: React.FC<BlockchainLeaderboardProps> = ({
           <span className="label">Player:</span>
           <span className="address">{playerAddress.slice(0, 6)}...{playerAddress.slice(-4)}</span>
         </div>
+
+        <div className="stat-item">
+          <span className="label">GAME_ROLE:</span>
+          <span className={`status ${userHasGameRole ? 'success' : 'error'}`}>
+            {userHasGameRole ? '✅ Yes' : '❌ No'}
+          </span>
+        </div>
       </div>
 
       <div className="actions">
@@ -161,15 +182,40 @@ export const BlockchainLeaderboard: React.FC<BlockchainLeaderboardProps> = ({
         <button 
           onClick={() => setShowSubmitScore(!showSubmitScore)} 
           className="submit-btn"
+          disabled={!isRegistered || !userHasGameRole}
+          style={{
+            opacity: (!isRegistered || !userHasGameRole) ? 0.5 : 1
+          }}
         >
           {showSubmitScore ? 'Hide Submit' : 'Submit Score'}
         </button>
+
+        <button 
+          onClick={() => setShowSetupGuide(!showSetupGuide)} 
+          className="setup-btn"
+          style={{
+            background: '#676FFF',
+            color: 'white'
+          }}
+        >
+          {showSetupGuide ? 'Hide' : 'Show'} Setup Guide
+        </button>
       </div>
+
+      {showSetupGuide && (
+        <MonadSetupGuide
+          gameAddress={gameAddress}
+          playerAddress={playerAddress}
+          gameRegistered={isRegistered}
+          hasGameRole={userHasGameRole}
+        />
+      )}
 
       {showSubmitScore && (
         <SubmitScore
           playerAddress={playerAddress}
-          score={100} // Demo score - in real game, get from game state
+          gameAddress={gameAddress}
+          score={Math.max(100, Math.floor(Math.random() * 1000))} // Demo score with some variation
           transactionCount={1}
           onSubmitSuccess={handleSubmitSuccess}
           onSubmitError={handleSubmitError}

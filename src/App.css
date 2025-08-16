@@ -199,3 +199,58 @@ board Styles */
 .retry-btn:hover {
   background: #cc3333;
 }
+
+/* User info and login styles */
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.monad-status {
+  font-size: 0.9rem;
+  color: #f0f0f0;
+  background: rgba(0,0,0,0.3);
+  padding: 5px 10px;
+  border-radius: 15px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.player-id {
+  font-size: 0.8rem;
+  color: #ddd;
+}
+
+.logout-button {
+  background: #ff4757;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+.logout-button:hover {
+  background: #ff3838;
+}
+
+/* Login options styles */
+.login-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.monad-login {
+  background: linear-gradient(135deg, #676FFF 0%, #5a63f0 100%);
+  color: white;
+}
+
+.email-login {
+  background: linear-gradient(135deg, #444 0%, #666 100%);
+  color: white;
+}
