@@ -1,0 +1,108 @@
+.blockchain-leaderboard {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #676FFF;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.blockchain-leaderboard h3 {
+  color: #676FFF;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.warning-message {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.warning-message p {
+  margin: 5px 0;
+  color: #ffc107;
+}
+
+.game-info {
+  background: rgba(103, 111, 255, 0.1);
+  border: 1px solid #676FFF;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+.game-info p {
+  margin: 0;
+  color: #fff;
+}
+
+.player-stats {
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(103, 111, 255, 0.2);
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.label {
+  color: #ccc;
+  font-weight: 500;
+}
+
+.value {
+  color: #676FFF;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.address {
+  color: #fff;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.refresh-btn, .submit-btn, .retry-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.refresh-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.submit-btn {
+  background: #676FFF;
+  color: white;
+}
+
+.retry-btn {
+  background: #ff4444;
+  color: white;
+}
+
+.refresh-btn:hover, .submit-btn:hover, .retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}

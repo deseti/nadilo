@@ -1,6 +1,9 @@
 import { usePrivy } from '@privy-io/react-auth';
 import { Game } from './components/Game';
 import { Leaderboard } from './components/Leaderboard';
+import { BlockchainLeaderboard } from './components/BlockchainLeaderboard';
+import { WalletConnection } from './components/WalletConnection';
+import { IntegrationStatus } from './components/IntegrationStatus';
 import './App.css';
 
 function App() {
@@ -14,6 +17,10 @@ function App() {
 
   // Determine the player's identifier. Use wallet address, email, or user ID as fallback
   const playerID = user?.wallet?.address || user?.email?.address || user?.id || 'Anonymous';
+  
+  // Game address placeholder - in production, this should be your actual game contract address
+  // For now, we'll use the leaderboard contract address as the game identifier
+  const gameAddress = '0xceCBFF203C8B6044F52CE23D914A1bfD997541A4';
 
   return (
     <div className="container">
@@ -31,12 +38,25 @@ function App() {
         {/* If logged in, show the game. Otherwise, show the login page. */}
         {authenticated ? (
           <div className="game-wrapper">
+            {/* Integration Status */}
+            <IntegrationStatus gameAddress={gameAddress} />
+            
+            {/* Wallet Connection Component */}
+            <WalletConnection />
+            
             <div className="game-section">
               {/* Pass the unique playerID as a prop to the Game component */}
               <Game playerID={playerID} />
             </div>
             <div className="leaderboard-section">
               <Leaderboard playerID={playerID} />
+              {/* Show blockchain leaderboard only if user has a wallet address */}
+              {user?.wallet?.address && (
+                <BlockchainLeaderboard 
+                  playerAddress={user.wallet.address}
+                  gameAddress={gameAddress}
+                />
+              )}
             </div>
           </div>
         ) : (

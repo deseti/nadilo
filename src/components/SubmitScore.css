@@ -1,0 +1,53 @@
+.submit-score-container {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #676FFF;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.score-info {
+  margin-bottom: 15px;
+}
+
+.score-info h3 {
+  color: #676FFF;
+  margin-bottom: 10px;
+}
+
+.score-info p {
+  color: #fff;
+  margin: 5px 0;
+}
+
+.submit-score-button {
+  background: linear-gradient(135deg, #676FFF, #5A67D8);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submit-score-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(103, 111, 255, 0.4);
+}
+
+.submit-score-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.success-message {
+  color: #4CAF50;
+}
+
+.success-message h3 {
+  color: #4CAF50;
+  margin-bottom: 10px;
+}
