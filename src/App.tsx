@@ -2,17 +2,37 @@ import { usePrivy } from '@privy-io/react-auth';
 import { Game } from './components/Game';
 import { Leaderboard } from './components/Leaderboard';
 import { BlockchainLeaderboard } from './components/BlockchainLeaderboard';
-import { WalletConnection } from './components/WalletConnection';
 import { IntegrationStatus } from './components/IntegrationStatus';
 import './App.css';
+import { useEffect } from 'react';
 
 function App() {
   // Main hook from Privy to access authentication status and user data
-  const { ready, authenticated, login, logout, user } = usePrivy();
+  const { ready, authenticated, login, logout, user, getAccessToken } = usePrivy();
+
+  // Debug logging with useEffect to avoid too many logs
+  useEffect(() => {
+    console.log("🔍 App State Change:", {
+      ready,
+      authenticated,
+      user: user ? {
+        id: user.id,
+        email: user.email?.address,
+        wallet: user.wallet?.address,
+        linkedAccounts: user.linkedAccounts?.length
+      } : null
+    });
+  }, [ready, authenticated, user]);
 
   // Show loading message while Privy is initializing
   if (!ready) {
-    return <div className="container"><h1>Loading...</h1></div>;
+    console.log("⏳ Privy not ready yet...");
+    return (
+      <div className="container">
+        <h1>Loading Privy...</h1>
+        <p>Initializing authentication...</p>
+      </div>
+    );
   }
 
   // Determine the player's identifier. Use wallet address, email, or user ID as fallback
@@ -41,9 +61,6 @@ function App() {
             {/* Integration Status */}
             <IntegrationStatus gameAddress={gameAddress} />
             
-            {/* Wallet Connection Component */}
-            <WalletConnection />
-            
             <div className="game-section">
               {/* Pass the unique playerID as a prop to the Game component */}
               <Game playerID={playerID} />
@@ -63,8 +80,24 @@ function App() {
           <div className="login-container">
             <h2>Join the Battle Arena</h2>
             <p>Sign in to start fighting and climb the leaderboard!</p>
-            <button className="login-button" onClick={login}>
-              Sign In
+            <button 
+              className="login-button" 
+              onClick={async () => {
+                console.log("🚀 Starting login process...");
+                try {
+                  console.log("📞 Calling login()...");
+                  const result = await login();
+                  console.log("✅ Login result:", result);
+                } catch (error) {
+                  console.error("❌ Login error:", {
+                    message: error instanceof Error ? error.message : String(error),
+                    stack: error instanceof Error ? error.stack : undefined,
+                    name: error instanceof Error ? error.name : 'Unknown Error'
+                  });
+                }
+              }}
+            >
+              Sign In with Email
             </button>
           </div>
         )}
