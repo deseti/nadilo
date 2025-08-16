@@ -43,9 +43,23 @@
 /* Game specific styles */
 .game-wrapper {
   display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.game-section {
+  display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+}
+
+.leaderboard-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .game-container {
@@ -99,4 +113,89 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}/* Leader
+board Styles */
+.leaderboard {
+  background: #1a1a2e;
+  border: 2px solid #00ff88;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+  max-width: 500px;
+}
+
+.leaderboard h3 {
+  color: #00ff88;
+  margin: 0 0 15px 0;
+  text-align: center;
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.leaderboard-entry {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 60px;
+  gap: 10px;
+  padding: 10px;
+  background: #16213e;
+  border-radius: 5px;
+  align-items: center;
+}
+
+.leaderboard-entry.current-player {
+  background: #2a4a2a;
+  border: 1px solid #00ff88;
+}
+
+.leaderboard-entry .rank {
+  color: #ffaa00;
+  font-weight: bold;
+}
+
+.leaderboard-entry .name {
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-entry .score {
+  color: #00ff88;
+  font-weight: bold;
+  text-align: right;
+}
+
+.leaderboard-entry .best {
+  color: #ffaa00;
+  font-size: 12px;
+  text-align: right;
+  font-weight: bold;
+}
+
+.test-btn, .refresh-btn, .retry-btn {
+  background: #00ff88;
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 5px;
+  font-size: 14px;
+}
+
+.test-btn:hover, .refresh-btn:hover, .retry-btn:hover {
+  background: #00cc66;
+}
+
+.retry-btn {
+  background: #ff4444;
+  color: #fff;
+}
+
+.retry-btn:hover {
+  background: #cc3333;
 }

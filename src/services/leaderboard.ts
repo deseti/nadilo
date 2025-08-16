@@ -25,13 +25,13 @@ export class LeaderboardService {
     }
   }
 
-  // Get top scores for leaderboard
+  // Get top scores for leaderboard (best score per player)
   static async getTopScores(limit: number = 100): Promise<LeaderboardEntry[]> {
     try {
       const { data, error } = await supabase
-        .from('leaderboard')
-        .select('*')
-        .order('score', { ascending: false })
+        .from('player_stats')
+        .select('player_name, best_score, total_games, updated_at')
+        .order('best_score', { ascending: false })
         .limit(limit);
 
       if (error) {
@@ -39,7 +39,13 @@ export class LeaderboardService {
         return [];
       }
 
-      return data || [];
+      // Convert player_stats format to LeaderboardEntry format
+      return data?.map(stat => ({
+        player_name: stat.player_name,
+        score: stat.best_score,
+        game_duration: 0, // We don't track duration for best scores
+        created_at: stat.updated_at
+      })) || [];
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
       return [];

@@ -3,16 +3,18 @@ import Phaser from 'phaser';
 import { GameScene } from '../game/GameScene';
 import { MenuScene } from '../game/MenuScene';
 
+// Define the props for the Game component to accept a playerID
 interface GameProps {
-  onScoreUpdate?: (score: number) => void;
+  playerID: string;
 }
 
-export const Game: React.FC<GameProps> = () => {
+export const Game: React.FC<GameProps> = ({ playerID }) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const phaserGameRef = useRef<Phaser.Game | null>(null);
 
   useEffect(() => {
-    if (!gameRef.current) return;
+    // Prevent re-creating the game instance if it already exists
+    if (!gameRef.current || phaserGameRef.current) return;
 
     // Phaser game configuration
     const config: Phaser.Types.Core.GameConfig = {
@@ -24,7 +26,7 @@ export const Game: React.FC<GameProps> = () => {
       physics: {
         default: 'arcade',
         arcade: {
-          gravity: { x: 0, y: 0 }, // Top-down view, no gravity
+          gravity: { x: 0, y: 0 },
           debug: false
         }
       },
@@ -34,14 +36,20 @@ export const Game: React.FC<GameProps> = () => {
     // Create Phaser game instance
     phaserGameRef.current = new Phaser.Game(config);
 
-    // Cleanup function
+    // *** KEY CHANGE ***
+    // Use the game's registry to store the playerID.
+    // This makes the playerID accessible from any scene within the game.
+    phaserGameRef.current.registry.set('playerID', playerID);
+
+    // Cleanup function to destroy the game instance when the component unmounts
     return () => {
       if (phaserGameRef.current) {
         phaserGameRef.current.destroy(true);
         phaserGameRef.current = null;
       }
     };
-  }, []);
+    // Add playerID to the dependency array to re-initialize if it changes (optional but good practice)
+  }, [playerID]);
 
   return (
     <div className="game-container">

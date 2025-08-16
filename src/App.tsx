@@ -1,15 +1,19 @@
 import { usePrivy } from '@privy-io/react-auth';
 import { Game } from './components/Game';
+import { Leaderboard } from './components/Leaderboard';
 import './App.css';
 
 function App() {
-  // Main hook from Privy to access authentication status
-  const { ready, authenticated, login, logout } = usePrivy();
+  // Main hook from Privy to access authentication status and user data
+  const { ready, authenticated, login, logout, user } = usePrivy();
 
   // Show loading message while Privy is initializing
   if (!ready) {
     return <div className="container"><h1>Loading...</h1></div>;
   }
+
+  // Determine the player's identifier. Use wallet address, email, or user ID as fallback
+  const playerID = user?.wallet?.address || user?.email?.address || user?.id || 'Anonymous';
 
   return (
     <div className="container">
@@ -24,10 +28,16 @@ function App() {
       </header>
 
       <main className="main-content">
-        {/* If logged in, show game content. If not, show login page. */}
+        {/* If logged in, show the game. Otherwise, show the login page. */}
         {authenticated ? (
           <div className="game-wrapper">
-            <Game />
+            <div className="game-section">
+              {/* Pass the unique playerID as a prop to the Game component */}
+              <Game playerID={playerID} />
+            </div>
+            <div className="leaderboard-section">
+              <Leaderboard playerID={playerID} />
+            </div>
           </div>
         ) : (
           <div className="login-container">
