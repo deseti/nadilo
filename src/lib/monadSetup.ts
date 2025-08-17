@@ -64,34 +64,57 @@ export class MonadGamesIDSetup {
    */
   static getGameRoleInstructions(playerAddress: string, gameAddress: string): string {
     return `
-To get GAME_ROLE permission for Monad Games ID:
+🎮 HOW TO GET GAME_ROLE PERMISSION FOR MONAD GAMES ID
 
-1. 📧 Contact Monad Team:
-   - Email: development@monad.xyz
-   - Discord: Join Monad Discord server
-   - Telegram: Monad developer group
+To submit scores to Monad Games ID blockchain, you need GAME_ROLE permission.
 
-2. 📋 Provide Information:
-   - Your wallet address: ${playerAddress}
-   - Game contract address: ${gameAddress}
-   - Game name: Renaz - Crypto Clash
-   - Game description: Token collection arena game
-   - Proof of ownership/development
+📧 CONTACT MONAD TEAM:
+   • Email: development@monad.xyz
+   • Subject: "GAME_ROLE Request for ${gameAddress.slice(0, 8)}..."
+   • Discord: Join Monad Discord for faster response
+   • Documentation: Check Monad Games ID official docs
 
-3. ⏳ Wait for Approval:
-   - Monad team will review your request
-   - They will grant GAME_ROLE to your address
-   - You'll receive confirmation
+📋 INFORMATION TO PROVIDE:
+   • Developer wallet: ${playerAddress}
+   • Game contract: ${gameAddress}
+   • Game name: "Renaz - Crypto Clash"
+   • Game type: Token collection arena game
+   • Live demo: ${window.location.origin}
+   • Repository: (if public)
 
-4. ✅ Verify Permission:
-   - Refresh this page after approval
-   - Check that GAME_ROLE shows as ✅
-   - You can then submit scores
+📄 EMAIL TEMPLATE:
+   Subject: GAME_ROLE Request for Renaz Game Integration
 
-Alternative Approaches:
-• Deploy a game contract with GAME_ROLE
-• Use a multi-sig wallet with GAME_ROLE
-• Implement meta-transactions through authorized contract
+   Hello Monad Team,
+
+   I'm developing "Renaz - Crypto Clash" and would like to integrate with Monad Games ID.
+
+   Game Details:
+   - Name: Renaz - Crypto Clash
+   - Type: Token collection arena game
+   - Demo: ${window.location.origin}
+   - Contract: ${gameAddress}
+   - Developer: ${playerAddress}
+
+   Please grant GAME_ROLE permission to submit player scores to your leaderboard.
+
+   Thank you!
+
+⏳ EXPECTED PROCESS:
+   1. Submit request with all required info
+   2. Monad team reviews (usually 1-3 business days)
+   3. GAME_ROLE granted to your wallet
+   4. You can submit scores to blockchain
+
+🔧 ALTERNATIVE SOLUTIONS:
+   • Deploy a smart contract with GAME_ROLE
+   • Use an authorized proxy contract
+   • Implement gasless meta-transactions
+
+💡 TIPS:
+   • Have a working demo ready
+   • Show genuine game development
+   • Join Monad community for better support
     `.trim();
   }
 
@@ -105,9 +128,11 @@ Alternative Approaches:
       chainId: 10143,
       rpcUrl: 'https://testnet-rpc.monad.xyz',
       explorer: 'https://testnet.monadexplorer.com',
-      faucet: 'https://faucet.monad.xyz', // Update with actual faucet URL
+      faucet: 'https://faucet.monad.xyz',
       docs: 'https://docs.monad.xyz',
-      discord: 'https://discord.gg/monad', // Update with actual Discord
+      discord: 'https://discord.gg/monad',
+      supportEmail: 'development@monad.xyz',
+      gamesIdDocs: 'https://monad-foundation.notion.site/How-to-integrate-Monad-Games-ID-24e6367594f2802b8dd1ef3fbf3d136a',
     };
   }
 

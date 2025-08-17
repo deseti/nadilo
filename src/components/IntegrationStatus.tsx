@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { isGameRegistered, hasGameRole } from '../lib/gameRegistration';
 import { registerGame } from '../lib/monadContract';
+import { GameRoleRequest } from './GameRoleRequest';
 import './IntegrationStatus.css';
 
 interface IntegrationStatusProps {
@@ -123,6 +124,15 @@ export const IntegrationStatus: React.FC<IntegrationStatusProps> = ({ gameAddres
         <div className="info-section">
           <p>⚠️ This game needs to be registered by an admin with GAME_ROLE permission.</p>
         </div>
+      )}
+
+      {/* Show GameRoleRequest component when user doesn't have GAME_ROLE */}
+      {user?.wallet?.address && !canRegister && (
+        <GameRoleRequest
+          playerAddress={user.wallet.address}
+          gameAddress={gameAddress}
+          gameName="Renaz - Crypto Clash"
+        />
       )}
     </div>
   );

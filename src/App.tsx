@@ -1,9 +1,8 @@
 import { usePrivy, type CrossAppAccountWithMetadata } from '@privy-io/react-auth';
 import { Game } from './components/Game';
 import { Leaderboard } from './components/Leaderboard';
-import { BlockchainLeaderboard } from './components/BlockchainLeaderboard';
-import { IntegrationStatus } from './components/IntegrationStatus';
-import { MonadSetupGuide } from './components/MonadSetupGuide';
+import { AddressEditor } from './components/AddressEditor';
+import { autoSubmitScore } from './lib/autoScoreSubmit';
 import './App.css';
 import { useEffect, useState } from 'react';
 import { hasGameRole } from './lib/gameRegistration';
@@ -18,6 +17,9 @@ function App() {
   const [hasUsername, setHasUsername] = useState<boolean>(false);
   const [isCheckingUsername, setIsCheckingUsername] = useState<boolean>(false);
   const [userHasGameRole, setUserHasGameRole] = useState<boolean>(false);
+  
+  // State for address editing
+  const [effectivePlayerAddress, setEffectivePlayerAddress] = useState<string>('');
 
   // Check for Monad Games ID cross-app account and username
   useEffect(() => {
@@ -143,8 +145,38 @@ function App() {
     );
   }
 
-  // Determine the player's identifier. Prioritize Monad Games ID wallet, then regular wallet, email, or user ID
-  const playerID = monadWalletAddress || user?.wallet?.address || user?.email?.address || user?.id || 'Anonymous';
+  // Function to handle score updates from the game
+  const handleScoreUpdate = async (score: number, transactions: number) => {
+    const address = effectivePlayerAddress || monadWalletAddress || user?.wallet?.address;
+    const playerName = monadUsername || user?.email?.address || 'Anonymous';
+    
+    if (address && score > 0) {
+      console.log('🎯 Game finished! Auto-submitting score:', {
+        address,
+        playerName,
+        score,
+        transactions
+      });
+      
+      // Auto submit to blockchain and local database
+      await autoSubmitScore(
+        address,
+        playerName,
+        leaderboardContract,
+        score,
+        transactions
+      );
+      
+      // Refresh blockchain leaderboard after submission
+      setTimeout(() => {
+        window.location.reload(); // Simple way to refresh all data
+      }, 3000);
+    }
+  };
+
+  // Determine the player's identifier. Use effective address if set, otherwise prioritize Monad Games ID wallet, then regular wallet, email, or user ID
+  const defaultAddress = monadWalletAddress || user?.wallet?.address || '';
+  const playerID = effectivePlayerAddress || defaultAddress || user?.email?.address || user?.id || 'Anonymous';
   const displayName = monadUsername || user?.email?.address || user?.id || 'Anonymous';
   
   // Game address - using your actual registered game address
@@ -195,30 +227,28 @@ function App() {
         {/* If logged in, show the game. Otherwise, show the login page. */}
         {authenticated ? (
           <div className="game-wrapper">
-            {/* Monad Setup Guide */}
-            <MonadSetupGuide 
-              gameAddress={gameAddress}
-              playerAddress={monadWalletAddress || user?.wallet?.address || ''}
-              gameRegistered={true} // You've already registered
-              hasGameRole={userHasGameRole} // Now using real status from blockchain
-            />
-            
-            {/* Integration Status */}
-            <IntegrationStatus gameAddress={leaderboardContract} />
+            {/* Address Editor - Allow users to customize their address */}
+            {user?.email?.address && (
+              <AddressEditor
+                userEmail={user.email.address}
+                currentAddress={defaultAddress}
+                onAddressChange={(newAddress) => {
+                  setEffectivePlayerAddress(newAddress);
+                  console.log('🔧 Address changed to:', newAddress);
+                }}
+                isMonadGamesConnected={!!monadWalletAddress}
+              />
+            )}
             
             <div className="game-section">
               {/* Pass the unique playerID as a prop to the Game component */}
-              <Game playerID={playerID} />
+              <Game 
+                playerID={playerID} 
+                onScoreUpdate={handleScoreUpdate}
+              />
             </div>
             <div className="leaderboard-section">
               <Leaderboard playerID={playerID} />
-              {/* Show blockchain leaderboard if user has any wallet address */}
-              {(monadWalletAddress || user?.wallet?.address) && (
-                <BlockchainLeaderboard 
-                  playerAddress={monadWalletAddress || user?.wallet?.address || ''}
-                  gameAddress={leaderboardContract}
-                />
-              )}
             </div>
           </div>
         ) : (

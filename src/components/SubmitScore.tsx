@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { updatePlayerData } from '../lib/monadContract';
 import { hasGameRole, isGameRegistered } from '../lib/gameRegistration';
+import { LocalScoreSubmit } from './LocalScoreSubmit';
 import './SubmitScore.css';
 
 // Use the standard type for window.ethereum
@@ -246,6 +247,18 @@ export const SubmitScore: React.FC<SubmitScoreProps> = ({
             <br />2. Get GAME_ROLE permission from Monad team
             <br />3. Then you can submit scores on-chain
           </small>
+        </div>
+      )}
+
+      {/* Local submission option when blockchain submission is not available */}
+      {(!gameRegistered || !userHasGameRole) && (
+        <div style={{ marginTop: '20px' }}>
+          <LocalScoreSubmit
+            playerAddress={playerAddress}
+            score={score}
+            transactionCount={transactionCount}
+            onSubmitSuccess={onSubmitSuccess}
+          />
         </div>
       )}
     </div>

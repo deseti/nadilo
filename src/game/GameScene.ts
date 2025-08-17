@@ -180,37 +180,47 @@ export class GameScene extends Phaser.Scene {
         const statusText = this.add.text(400, 350, 'Submitting score...', { fontSize: '18px', color: '#cccccc' }).setOrigin(0.5).setDepth(1);
 
         // --- Score Submission Logic ---
-        // Retrieve the playerID from the game's registry
+        // Retrieve the playerID and score callback from the game's registry
         const playerID = this.registry.get('playerID');
+        const onScoreUpdate = this.registry.get('onScoreUpdate');
 
         // Calculate the game duration in seconds
         const gameDuration = Math.floor((this.time.now - this.startTime) / 1000);
 
         if (playerID) {
-            // Call the static submitScore method from our service
+            // Submit to local database (existing logic)
             LeaderboardService.submitScore(playerID, this.score, gameDuration)
                 .then(success => {
                     if (success) {
-                        statusText.setText('Score Submitted!').setColor('#00ff88');
+                        statusText.setText('Score Submitted to Local DB!').setColor('#00ff88');
                     } else {
-                        statusText.setText('Submission Failed.').setColor('#ff4444');
+                        statusText.setText('Local DB Submission Failed.').setColor('#ff4444');
                     }
                 })
                 .catch(() => {
-                    statusText.setText('Error submitting score.').setColor('#ff4444');
+                    statusText.setText('Error submitting to local DB.').setColor('#ff4444');
                 })
                 .finally(() => {
                     // Add a button to go back to the menu after submission attempt
-                    const backButton = this.add.rectangle(400, 380, 150, 40, 0x00ff88).setInteractive().setDepth(1);
+                    const backButton = this.add.rectangle(400, 420, 150, 40, 0x00ff88).setInteractive().setDepth(1);
                     backButton.on('pointerdown', () => this.scene.start('MenuScene'));
-                    this.add.text(400, 380, 'MAIN MENU', { fontSize: '18px', color: '#000000' }).setOrigin(0.5).setDepth(1);
+                    this.add.text(400, 420, 'MAIN MENU', { fontSize: '18px', color: '#000000' }).setOrigin(0.5).setDepth(1);
                 });
+
+            // Call React callback for blockchain submission
+            if (onScoreUpdate && typeof onScoreUpdate === 'function') {
+                console.log('🚀 Calling React callback for auto blockchain submission...');
+                setTimeout(() => {
+                    onScoreUpdate(this.score, 1); // score, 1 transaction
+                    statusText.setText('Auto-submitting to blockchain...').setColor('#676FFF');
+                }, 1000);
+            }
         } else {
             // Handle case where playerID is not found (e.g., for testing)
             statusText.setText('Could not find Player ID.').setColor('#ff4444');
-            const backButton = this.add.rectangle(400, 380, 150, 40, 0x00ff88).setInteractive().setDepth(1);
+            const backButton = this.add.rectangle(400, 420, 150, 40, 0x00ff88).setInteractive().setDepth(1);
             backButton.on('pointerdown', () => this.scene.start('MenuScene'));
-            this.add.text(400, 380, 'MAIN MENU', { fontSize: '18px', color: '#000000' }).setOrigin(0.5).setDepth(1);
+            this.add.text(400, 420, 'MAIN MENU', { fontSize: '18px', color: '#000000' }).setOrigin(0.5).setDepth(1);
         }
     }
 }

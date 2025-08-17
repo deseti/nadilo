@@ -38,6 +38,10 @@ export const BlockchainLeaderboard: React.FC<BlockchainLeaderboardProps> = ({
   const [showSetupGuide, setShowSetupGuide] = useState(false);
 
   useEffect(() => {
+    console.log('🔄 BlockchainLeaderboard: Address changed, reloading data...', {
+      playerAddress,
+      gameAddress
+    });
     loadPlayerData();
   }, [playerAddress, gameAddress]);
 
@@ -50,25 +54,35 @@ export const BlockchainLeaderboard: React.FC<BlockchainLeaderboardProps> = ({
     try {
       setLoading(true);
       setError(null);
+      
+      console.log('📊 Loading blockchain data for:', {
+        playerAddress,
+        gameAddress
+      });
 
       // Check if game is registered first
       const registered = await isGameRegistered(gameAddress);
       setIsRegistered(registered);
+      console.log('🎮 Game registration status:', registered);
 
       // Check if user has GAME_ROLE
       const hasRole = await hasGameRole(playerAddress);
       setUserHasGameRole(hasRole);
+      console.log('🎭 GAME_ROLE status for', playerAddress, ':', hasRole);
 
       if (registered) {
         // Get game information
         const gameData = await getGameInfo(gameAddress);
         setGameInfo(gameData);
+        console.log('📋 Game info:', gameData);
 
         // Load player data for this specific game
         const playerGameData = await getPlayerData(gameAddress, playerAddress);
+        console.log('👤 Player game data:', playerGameData);
         
         // Load total score across all games
         const total = await getTotalPlayerScore(playerAddress);
+        console.log('🏆 Total score:', total);
 
         setPlayerData({
           address: playerAddress,

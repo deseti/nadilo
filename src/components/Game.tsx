@@ -6,9 +6,10 @@ import { MenuScene } from '../game/MenuScene';
 // Define the props for the Game component to accept a playerID
 interface GameProps {
   playerID: string;
+  onScoreUpdate?: (score: number, transactions: number) => void;
 }
 
-export const Game: React.FC<GameProps> = ({ playerID }) => {
+export const Game: React.FC<GameProps> = ({ playerID, onScoreUpdate }) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const phaserGameRef = useRef<Phaser.Game | null>(null);
 
@@ -40,6 +41,11 @@ export const Game: React.FC<GameProps> = ({ playerID }) => {
     // Use the game's registry to store the playerID.
     // This makes the playerID accessible from any scene within the game.
     phaserGameRef.current.registry.set('playerID', playerID);
+    
+    // Store the score callback in game registry
+    if (onScoreUpdate) {
+      phaserGameRef.current.registry.set('onScoreUpdate', onScoreUpdate);
+    }
 
     // Cleanup function to destroy the game instance when the component unmounts
     return () => {
