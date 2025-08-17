@@ -184,7 +184,7 @@ function App() {
   const displayName = monadUsername || user?.email?.address || user?.id || 'Anonymous';
   
   // Game address - using your actual registered game address
-  const gameAddress = '0x5b84Dc548e45cC4f1498b95C000C748c1c953f64';
+  const gameAddress = '0x2315bF06E7334dEdFeAA899240b64678dC4b92d1';
   const leaderboardContract = '0xceCBFF203C8B6044F52CE23D914A1bfD997541A4';
 
   return (
