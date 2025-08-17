@@ -323,7 +323,29 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
 
       {authenticated && walletAddress && (
         <>
-          {/* Important Notice */}
+          {/* Debug Information */}
+          <div className="info-section" style={{ background: 'rgba(59, 130, 246, 0.1)', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
+            <h3>🔍 Debug Information</h3>
+            <div style={{ fontSize: '12px', color: '#ccc' }}>
+              <p><strong>Privy App ID:</strong> {import.meta.env.VITE_PRIVY_APP_ID}</p>
+              <p><strong>Monad Games ID:</strong> {import.meta.env.VITE_MONAD_GAMES_ID}</p>
+              <p><strong>User Linked Accounts:</strong> {user?.linkedAccounts?.length || 0}</p>
+              <p><strong>Monad Wallet Address:</strong> {monadWalletAddress || 'Not found'}</p>
+              <p><strong>Current Wallet Address:</strong> {walletAddress || 'Not connected'}</p>
+              {user?.linkedAccounts && user.linkedAccounts.length > 0 && (
+                <div>
+                  <p><strong>Available Cross-App Accounts:</strong></p>
+                  {user.linkedAccounts.map((account, index) => (
+                    <div key={index} style={{ marginLeft: '10px', fontSize: '11px' }}>
+                      - Type: {account.type}, App ID: {(account as any).providerApp?.id || 'N/A'}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Wallet Information */}
           <div className="info-section">
             <h3>⚠️ Wallet Information</h3>
             <div style={{ marginBottom: '12px' }}>

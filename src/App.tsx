@@ -30,10 +30,19 @@ function App() {
     const checkMonadGamesID = async () => {
       if (authenticated && user && ready) {
         console.log("🔍 Checking for Monad Games ID integration...");
+        console.log("🔧 Cross App ID:", import.meta.env.VITE_MONAD_GAMES_ID);
         
         // Check if user has linkedAccounts
         if (user.linkedAccounts.length > 0) {
           console.log("📋 User has linked accounts:", user.linkedAccounts.length);
+          
+          // Debug: log all linked accounts
+          user.linkedAccounts.forEach((account, index) => {
+            console.log(`📋 Account ${index}:`, {
+              type: account.type,
+              providerAppId: account.type === 'cross_app' ? (account as any).providerApp?.id : 'N/A'
+            });
+          });
           
           // Get the cross app account created using Monad Games ID
           const crossAppAccount: CrossAppAccountWithMetadata = user.linkedAccounts.filter(
@@ -42,7 +51,7 @@ function App() {
           )[0] as CrossAppAccountWithMetadata;
 
           if (crossAppAccount) {
-            console.log("✅ Found Monad Games ID cross-app account");
+            console.log("✅ Found Monad Games ID cross-app account:", crossAppAccount);
             
             // The first embedded wallet created using Monad Games ID, is the wallet address
             if (crossAppAccount.embeddedWallets.length > 0) {
@@ -58,6 +67,7 @@ function App() {
             }
           } else {
             console.log("⚠️ No Monad Games ID cross-app account found");
+            console.log("🔍 Looking for Cross App ID:", import.meta.env.VITE_MONAD_GAMES_ID);
           }
         } else {
           console.log("⚠️ User has no linked accounts");
@@ -194,7 +204,7 @@ function App() {
         {authenticated && (
           <div className="user-info">
             {/* Show Monad Games ID status */}
-            {monadWalletAddress && (
+            {monadWalletAddress ? (
               <div className="monad-status">
                 {isCheckingUsername ? (
                   <span>🔍 Checking username...</span>
@@ -217,6 +227,13 @@ function App() {
                     </a>
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="monad-status">
+                <span>⚠️ No Monad Games ID linked</span>
+                <small style={{ display: 'block', color: '#888', fontSize: '10px', marginTop: '4px' }}>
+                  Please logout and sign in again with Monad Games ID
+                </small>
               </div>
             )}
             <span className="player-id">Player: {displayName}</span>
@@ -310,9 +327,9 @@ function App() {
                   console.log("🚀 Starting Monad Games ID login...");
                   try {
                     const result = await login();
-                    console.log("✅ Login result:", result);
+                    console.log("✅ Monad Games ID login result:", result);
                   } catch (error) {
-                    console.error("❌ Login error:", error);
+                    console.error("❌ Monad Games ID login error:", error);
                   }
                 }}
                 style={{
@@ -322,25 +339,6 @@ function App() {
                 }}
               >
                 🎮 Sign In with Monad Games ID
-              </button>
-              
-              <button 
-                className="login-button email-login" 
-                onClick={async () => {
-                  console.log("📧 Starting email login...");
-                  try {
-                    const result = await login();
-                    console.log("✅ Login result:", result);
-                  } catch (error) {
-                    console.error("❌ Login error:", error);
-                  }
-                }}
-                style={{
-                  background: '#444',
-                  border: '2px solid #666'
-                }}
-              >
-                📧 Sign In with Email
               </button>
             </div>
             
