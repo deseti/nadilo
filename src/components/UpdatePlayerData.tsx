@@ -157,6 +157,72 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
       setErrorMessage('');
       setIsSuccess(false);
 
+      // Check if wallet is on the correct chain
+      if (window.ethereum) {
+        try {
+          const chainId = await (window.ethereum as any).request({ method: 'eth_chainId' });
+          const currentChainId = parseInt(chainId, 16);
+          const targetChainId = 10143; // Monad Testnet
+          
+          console.log('Current Chain ID:', currentChainId, 'Target Chain ID:', targetChainId);
+          
+          if (currentChainId !== targetChainId) {
+            console.log('Wrong chain detected, requesting chain switch...');
+            
+            try {
+              // Try to switch to Monad Testnet
+              await (window.ethereum as any).request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: '0x279F' }], // 10143 in hex
+              });
+              
+              console.log('Successfully switched to Monad Testnet');
+              
+              // Wait a bit for the chain switch to complete
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+            } catch (switchError: any) {
+              console.log('Switch failed, trying to add the network...');
+              
+              if (switchError.code === 4902) {
+                // Chain not added to wallet, add it
+                try {
+                  await (window.ethereum as any).request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                      chainId: '0x279F', // 10143 in hex
+                      chainName: 'Monad Testnet',
+                      nativeCurrency: {
+                        name: 'MON',
+                        symbol: 'MON',
+                        decimals: 18,
+                      },
+                      rpcUrls: ['https://testnet-rpc.monad.xyz'],
+                      blockExplorerUrls: ['https://testnet.monadexplorer.com'],
+                    }],
+                  });
+                  
+                  console.log('Successfully added and switched to Monad Testnet');
+                  
+                  // Wait a bit for the network to be added and switched
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  
+                } catch (addError) {
+                  console.error('Failed to add Monad Testnet:', addError);
+                  throw new Error('Please manually switch to Monad Testnet in your wallet. Chain ID: 10143');
+                }
+              } else {
+                console.error('Failed to switch network:', switchError);
+                throw new Error('Please manually switch to Monad Testnet in your wallet. Chain ID: 10143');
+              }
+            }
+          }
+        } catch (chainError) {
+          console.error('Error checking/switching chain:', chainError);
+          throw new Error('Failed to verify network. Please ensure you are connected to Monad Testnet (Chain ID: 10143)');
+        }
+      }
+
       console.log('Updating player data...', {
         gameAddress,
         playerAddress,
@@ -193,6 +259,10 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
         errorMsg += 'Transaction was rejected by user.';
       } else if (error.message?.includes('insufficient funds')) {
         errorMsg += 'Insufficient MON tokens for gas fee.';
+      } else if (error.message?.includes('does not match the target chain') || error.message?.includes('Chain ID')) {
+        errorMsg += `Wrong Network: Please switch to Monad Testnet (Chain ID: 10143). Current network is not supported.`;
+      } else if (error.message?.includes('manually switch to Monad Testnet')) {
+        errorMsg += error.message;
       } else if (error.message?.includes('AccessControlUnauthorizedAccount')) {
         errorMsg += `Access Control Error: The connected wallet (${walletAddress?.slice(0, 6)}...${walletAddress?.slice(-4)}) does not have GAME_ROLE permission. Only wallets with GAME_ROLE can submit scores to the blockchain. Contact Monad team to get GAME_ROLE for your wallet, or use a wallet that already has the permission.`;
       } else if (error.message?.includes('execution reverted') || error.message?.includes('contract function') || error.message?.includes('reverted')) {
@@ -253,9 +323,10 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
         <>
           {/* Important Notice */}
           <div className="info-section">
-            <h3>⚠️ Important Notice</h3>
-            <p>To submit data to the Monad Games ID contract, your <strong>connected wallet</strong> must have GAME_ROLE permission from the Monad team.</p>
-            <p>Player Address can be any valid address, but the transaction must be signed by a wallet with GAME_ROLE.</p>
+            <h3>⚠️ Important Requirements</h3>
+            <p><strong>Network:</strong> Your wallet must be connected to <strong>Monad Testnet (Chain ID: 10143)</strong></p>
+            <p><strong>Permission:</strong> Your connected wallet must have <strong>GAME_ROLE</strong> permission from the Monad team</p>
+            <p><strong>Player Address:</strong> Can be any valid address, but transaction must be signed by a wallet with GAME_ROLE</p>
             <p><strong>Connected Wallet:</strong> {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</p>
           </div>
 
