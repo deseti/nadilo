@@ -107,7 +107,7 @@ export const AddressEditor: React.FC<AddressEditorProps> = ({
         <div className="address-info">
           <div className="address-type">
             <span className="label">
-              {useCustomAddress ? '🎯 Active Address (Custom):' : '🤖 Active Address (Auto-Generated):'}
+              {useCustomAddress ? '🎯 Player Address (Custom):' : '🤖 Active Address (Auto-Generated):'}
             </span>
             <span className="address">{effectiveAddress.slice(0, 8)}...{effectiveAddress.slice(-6)}</span>
             <button 
