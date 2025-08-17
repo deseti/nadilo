@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWallets, usePrivy } from '@privy-io/react-auth';
 import { updatePlayerData, getPlayerData } from '../lib/monadContract';
-import { hasGameRole, isGameRegistered } from '../lib/gameRegistration';
 import './UpdatePlayerData.css';
 
 interface UpdatePlayerDataProps {
@@ -27,11 +26,6 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [currentPlayerData, setCurrentPlayerData] = useState<{score: number, transactions: number} | null>(null);
 
-  // Permission checks
-  const [gameRegistered, setGameRegistered] = useState<boolean>(false);
-  const [userHasGameRole, setUserHasGameRole] = useState<boolean>(false);
-  const [checkingPermissions, setCheckingPermissions] = useState(false);
-
   // Privy hooks
   const { wallets } = useWallets();
   const { connectWallet, linkWallet } = usePrivy();
@@ -40,47 +34,12 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
   const connectedWallet = wallets.find(wallet => wallet.connectorType !== 'embedded');
   const walletAddress = connectedWallet?.address;
 
-  // Auto-fill player address with connected wallet
-  useEffect(() => {
-    if (walletAddress && !playerAddress) {
-      setPlayerAddress(walletAddress);
-    }
-  }, [walletAddress, playerAddress]);
-
-  // Check permissions when addresses change
-  useEffect(() => {
-    if (gameAddress && walletAddress) {
-      checkPermissions();
-    }
-  }, [gameAddress, walletAddress]);
-
   // Load current player data when addresses change
   useEffect(() => {
     if (gameAddress && playerAddress) {
       loadCurrentPlayerData();
     }
   }, [gameAddress, playerAddress]);
-
-  const checkPermissions = async () => {
-    if (!walletAddress || !gameAddress) return;
-
-    try {
-      setCheckingPermissions(true);
-      
-      // Check if game is registered
-      const registered = await isGameRegistered(gameAddress);
-      setGameRegistered(registered);
-      
-      // Check if current user has GAME_ROLE
-      const hasRole = await hasGameRole(walletAddress);
-      setUserHasGameRole(hasRole);
-      
-    } catch (error) {
-      console.error('Error checking permissions:', error);
-    } finally {
-      setCheckingPermissions(false);
-    }
-  };
 
   const loadCurrentPlayerData = async () => {
     if (!gameAddress || !playerAddress) return;
@@ -197,15 +156,6 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
       setIsSubmitting(true);
       setErrorMessage('');
       setIsSuccess(false);
-
-      // Check permissions before submitting
-      if (!gameRegistered) {
-        throw new Error('This game is not registered. Please register the game first.');
-      }
-
-      if (!userHasGameRole) {
-        throw new Error('Your wallet does not have GAME_ROLE permission. Only authorized addresses can update player data.');
-      }
 
       console.log('Updating player data...', {
         gameAddress,
@@ -337,15 +287,27 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
 
             <div className="form-group">
               <label htmlFor="playerAddress">Player Address:</label>
-              <input
-                id="playerAddress"
-                type="text"
-                value={playerAddress}
-                onChange={(e) => setPlayerAddress(e.target.value)}
-                placeholder="0x..."
-                required
-              />
-              <small>The player's wallet address</small>
+              <div className="input-with-button">
+                <input
+                  id="playerAddress"
+                  type="text"
+                  value={playerAddress}
+                  onChange={(e) => setPlayerAddress(e.target.value)}
+                  placeholder="0x..."
+                  required
+                />
+                {walletAddress && (
+                  <button
+                    type="button"
+                    onClick={() => setPlayerAddress(walletAddress)}
+                    className="use-wallet-btn"
+                    title="Use connected wallet address"
+                  >
+                    Use My Wallet
+                  </button>
+                )}
+              </div>
+              <small>The player's wallet address (can be any valid address)</small>
             </div>
 
             <div className="form-group">
@@ -390,26 +352,11 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
               </div>
             )}
 
-            {/* Warnings */}
-            {!gameRegistered && authenticated && walletAddress && (
-              <div className="warning-message">
-                <p>⚠️ Game Not Registered</p>
-                <small>This game needs to be registered in Monad Games ID first.</small>
-              </div>
-            )}
-
-            {!userHasGameRole && gameRegistered && authenticated && walletAddress && (
-              <div className="warning-message">
-                <p>⚠️ No GAME_ROLE Permission</p>
-                <small>Your wallet does not have GAME_ROLE permission. Contact Monad team to get access.</small>
-              </div>
-            )}
-
             {/* Submit Button */}
             <div className="button-group">
               <button
                 type="submit"
-                disabled={isSubmitting || !gameRegistered || !userHasGameRole || !authenticated || !walletAddress}
+                disabled={isSubmitting || !authenticated || !walletAddress}
                 className="submit-btn"
               >
                 {isSubmitting ? 'Updating...' : 'Update Player Data'}
