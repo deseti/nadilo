@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useWallets, usePrivy } from '@privy-io/react-auth';
-import { updatePlayerData, getPlayerData } from '../lib/monadContract';
+import { updatePlayerData, updatePlayerDataWithPrivy, getPlayerData } from '../lib/monadContract';
 import './UpdatePlayerData.css';
 
 interface UpdatePlayerDataProps {
   onUpdateSuccess?: () => void;
   onUpdateError?: (error: Error) => void;
   defaultGameAddress?: string;
+  monadWalletAddress?: string;
 }
 
 export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
   onUpdateSuccess,
   onUpdateError,
-  defaultGameAddress = '0xceCBFF203C8B6044F52CE23D914A1bfD997541A4'
+  defaultGameAddress = '0xceCBFF203C8B6044F52CE23D914A1bfD997541A4',
+  monadWalletAddress
 }) => {
   // Form state
   const [gameAddress, setGameAddress] = useState(defaultGameAddress);
@@ -28,11 +30,15 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
 
   // Privy hooks
   const { wallets } = useWallets();
-  const { connectWallet, linkWallet } = usePrivy();
+  const { connectWallet, linkWallet, user } = usePrivy();
   const { authenticated, ready } = usePrivy();
 
-  const connectedWallet = wallets.find(wallet => wallet.connectorType !== 'embedded');
-  const walletAddress = connectedWallet?.address;
+  // Get both embedded wallet (Monad Games ID) and external wallet
+  const embeddedWallet = wallets.find(wallet => wallet.connectorType === 'embedded');
+  const externalWallet = wallets.find(wallet => wallet.connectorType !== 'embedded');
+  
+  // Prioritize Monad Games ID wallet address, then embedded wallet, then external wallet
+  const walletAddress = monadWalletAddress || embeddedWallet?.address || externalWallet?.address;
 
   // Load current player data when addresses change
   useEffect(() => {
@@ -40,6 +46,13 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
       loadCurrentPlayerData();
     }
   }, [gameAddress, playerAddress]);
+
+  // Set default player address when monadWalletAddress is available
+  useEffect(() => {
+    if (monadWalletAddress && !playerAddress) {
+      setPlayerAddress(monadWalletAddress);
+    }
+  }, [monadWalletAddress, playerAddress]);
 
   const loadCurrentPlayerData = async () => {
     if (!gameAddress || !playerAddress) return;
@@ -78,63 +91,33 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
     try {
       console.log('🔗 Attempting to connect wallet...');
       
-      // Try different methods to connect wallet
-      if (linkWallet) {
-        console.log('🔗 Using linkWallet...');
+      // If user is not authenticated with Privy, authenticate first
+      if (!authenticated) {
+        console.log('� User not authenticated, starting login...');
+        // This will trigger Privy login which includes embedded wallet creation
         await linkWallet();
-      } else {
-        console.log('🔗 Trying direct MetaMask connection...');
-        // Direct MetaMask connection
-        if (window.ethereum) {
-          try {
-            const accounts = await (window.ethereum as any).request({ 
-              method: 'eth_requestAccounts' 
-            });
-            console.log('✅ Connected accounts:', accounts);
-            
-            // Switch to Monad Testnet if needed
-            try {
-              await (window.ethereum as any).request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0x279F' }], // 10143 in hex
-              });
-            } catch (switchError: any) {
-              // If chain doesn't exist, try to add it
-              if (switchError.code === 4902) {
-                await (window.ethereum as any).request({
-                  method: 'wallet_addEthereumChain',
-                  params: [{
-                    chainId: '0x279F',
-                    chainName: 'Monad Testnet',
-                    nativeCurrency: {
-                      name: 'MON',
-                      symbol: 'MON',
-                      decimals: 18,
-                    },
-                    rpcUrls: ['https://testnet-rpc.monad.xyz'],
-                    blockExplorerUrls: ['https://testnet.monadexplorer.com'],
-                  }],
-                });
-              }
-            }
-            
-            // Reload page to detect new wallet
-            setTimeout(() => window.location.reload(), 1000);
-          } catch (ethError) {
-            console.error('❌ MetaMask connection error:', ethError);
-            throw ethError;
-          }
-        } else {
-          throw new Error('No wallet provider found. Please install MetaMask or another wallet.');
-        }
+        return;
       }
+      
+      // If authenticated but no embedded wallet, try to create one
+      if (!embeddedWallet) {
+        console.log('📱 No embedded wallet found, attempting to create/connect...');
+        await connectWallet();
+      }
+      
+      // If no external wallet and user wants to connect one
+      if (!externalWallet) {
+        console.log('🔗 Connecting external wallet...');
+        await linkWallet();
+      }
+      
+      console.log('✅ Wallet connection process completed');
+      
     } catch (error: any) {
       console.error('❌ Error connecting wallet:', error);
       let errorMsg = 'Failed to connect wallet. ';
       if (error.message?.includes('User rejected')) {
         errorMsg += 'Connection was rejected by user.';
-      } else if (error.message?.includes('No wallet provider')) {
-        errorMsg += 'Please install MetaMask or another Web3 wallet.';
       } else {
         errorMsg += error.message || 'Please try again.';
       }
@@ -227,14 +210,33 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
         gameAddress,
         playerAddress,
         scoreAmount,
-        transactionAmount
+        transactionAmount,
+        monadWalletAddress: monadWalletAddress,
+        externalWalletAddress: walletAddress,
+        hasEmbeddedWallet: !!embeddedWallet
       });
 
-      const result = await updatePlayerData(
-        playerAddress,
-        parseInt(scoreAmount),
-        parseInt(transactionAmount)
-      );
+      let result;
+      
+      // Prioritize Monad Games ID embedded wallet if available
+      if (monadWalletAddress && embeddedWallet) {
+        console.log('Using Privy embedded wallet (Monad Games ID)');
+        result = await updatePlayerDataWithPrivy(
+          playerAddress,
+          parseInt(scoreAmount),
+          parseInt(transactionAmount),
+          embeddedWallet
+        );
+      } else if (externalWallet) {
+        console.log('Using external wallet (MetaMask, etc.)');
+        result = await updatePlayerData(
+          playerAddress,
+          parseInt(scoreAmount),
+          parseInt(transactionAmount)
+        );
+      } else {
+        throw new Error('No wallet available. Please connect a wallet first.');
+      }
 
       if (result.success) {
         setIsSuccess(true);
@@ -285,7 +287,7 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
 
   const resetForm = () => {
     setGameAddress(defaultGameAddress);
-    setPlayerAddress(walletAddress || '');
+    setPlayerAddress(monadWalletAddress || walletAddress || '');
     setScoreAmount('');
     setTransactionAmount('');
     setIsSuccess(false);
@@ -323,11 +325,31 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
         <>
           {/* Important Notice */}
           <div className="info-section">
-            <h3>⚠️ Important Requirements</h3>
-            <p><strong>Network:</strong> Your wallet must be connected to <strong>Monad Testnet (Chain ID: 10143)</strong></p>
-            <p><strong>Permission:</strong> Your connected wallet must have <strong>GAME_ROLE</strong> permission from the Monad team</p>
-            <p><strong>Player Address:</strong> Can be any valid address, but transaction must be signed by a wallet with GAME_ROLE</p>
-            <p><strong>Connected Wallet:</strong> {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</p>
+            <h3>⚠️ Wallet Information</h3>
+            <div style={{ marginBottom: '12px' }}>
+              <strong>Available Wallets:</strong>
+              <div style={{ marginTop: '8px' }}>
+                {monadWalletAddress && (
+                  <div style={{ color: '#4ade80', marginBottom: '4px' }}>
+                    ✅ <strong>Monad Games ID Wallet:</strong> {monadWalletAddress.slice(0, 6)}...{monadWalletAddress.slice(-4)} (Recommended)
+                  </div>
+                )}
+                {walletAddress && walletAddress !== monadWalletAddress && (
+                  <div style={{ color: '#fbbf24', marginBottom: '4px' }}>
+                    ⚠️ <strong>External Wallet:</strong> {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)} (May not have GAME_ROLE)
+                  </div>
+                )}
+              </div>
+            </div>
+            <p><strong>Priority:</strong> {monadWalletAddress ? 'Using Monad Games ID embedded wallet' : 'Using external wallet'}</p>
+            
+            {monadWalletAddress && (
+              <div style={{ background: 'rgba(74, 222, 128, 0.1)', padding: '8px', borderRadius: '4px', marginTop: '8px' }}>
+                <small style={{ color: '#4ade80' }}>
+                  💡 <strong>Tip:</strong> If you have a Monad Games ID account, the embedded wallet should have GAME_ROLE permission automatically.
+                </small>
+              </div>
+            )}
           </div>
 
           {/* Current Player Data */}
@@ -373,18 +395,31 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
                   placeholder="0x..."
                   required
                 />
-                {walletAddress && (
-                  <button
-                    type="button"
-                    onClick={() => setPlayerAddress(walletAddress)}
-                    className="use-wallet-btn"
-                    title="Use connected wallet address"
-                  >
-                    Use My Wallet
-                  </button>
-                )}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {monadWalletAddress && (
+                    <button
+                      type="button"
+                      onClick={() => setPlayerAddress(monadWalletAddress)}
+                      className="use-wallet-btn"
+                      title="Use Monad Games ID wallet"
+                      style={{ background: 'rgba(74, 222, 128, 0.2)', borderColor: 'rgba(74, 222, 128, 0.3)', color: '#4ade80' }}
+                    >
+                      Use Monad ID Wallet
+                    </button>
+                  )}
+                  {walletAddress && walletAddress !== monadWalletAddress && (
+                    <button
+                      type="button"
+                      onClick={() => setPlayerAddress(walletAddress)}
+                      className="use-wallet-btn"
+                      title="Use external wallet address"
+                    >
+                      Use External Wallet
+                    </button>
+                  )}
+                </div>
               </div>
-              <small>The player's wallet address (can be any valid address)</small>
+              <small>The player's wallet address (recommended: use Monad Games ID wallet)</small>
             </div>
 
             <div className="form-group">

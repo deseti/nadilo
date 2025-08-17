@@ -284,6 +284,7 @@ function App() {
                   <div className="admin-card">
                     <UpdatePlayerData
                       defaultGameAddress={gameAddress}
+                      monadWalletAddress={monadWalletAddress}
                       onUpdateSuccess={() => {
                         console.log('✅ Player data updated successfully');
                         // Optionally refresh leaderboard or show success message

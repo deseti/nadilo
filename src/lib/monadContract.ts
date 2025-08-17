@@ -142,6 +142,82 @@ export async function updatePlayerData(
   }
 }
 
+// Fungsi untuk update data player menggunakan Privy embedded wallet
+export async function updatePlayerDataWithPrivy(
+  playerAddress: string, 
+  scoreAmount: number, 
+  transactionAmount: number,
+  privyWallet: any // Privy wallet object
+) {
+  try {
+    console.log('Starting score submission with Privy embedded wallet:', {
+      playerAddress,
+      scoreAmount,
+      transactionAmount,
+      contractAddress: MONAD_LEADERBOARD_CONTRACT_ADDRESS,
+      walletAddress: privyWallet.address
+    });
+
+    // Check if the player address is valid
+    if (!playerAddress.startsWith('0x') || playerAddress.length !== 42) {
+      throw new Error('Invalid player address format');
+    }
+
+    // Create wallet client from Privy embedded wallet
+    const walletClient = await privyWallet.getEthereumProvider();
+    const ethereumProvider = walletClient;
+    
+    // Create viem wallet client
+    const viemWalletClient = createWalletClient({
+      chain: monadTestnet,
+      transport: custom(ethereumProvider),
+    });
+
+    const account = privyWallet.address;
+    console.log('Privy wallet connected:', account);
+
+    // Simulate the contract call first
+    console.log('Simulating contract call...');
+    const { request } = await publicClient.simulateContract({
+      address: MONAD_LEADERBOARD_CONTRACT_ADDRESS,
+      abi: MONAD_LEADERBOARD_ABI,
+      functionName: 'updatePlayerData',
+      args: [playerAddress, BigInt(scoreAmount), BigInt(transactionAmount)],
+      account,
+    });
+
+    console.log('Simulation successful, executing transaction...');
+    const hash = await viemWalletClient.writeContract({
+      ...request,
+      account
+    });
+    console.log('Transaction sent:', hash);
+    
+    // Tunggu transaksi selesai
+    console.log('Waiting for transaction confirmation...');
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    console.log('Transaction confirmed:', receipt);
+    
+    return {
+      success: true,
+      transactionHash: hash,
+      receipt,
+    };
+  } catch (error: any) {
+    console.error('Error updating player data with Privy:', error);
+    
+    // Log more detailed error information
+    if (error.cause) {
+      console.error('Error cause:', error.cause);
+    }
+    if (error.details) {
+      console.error('Error details:', error.details);
+    }
+    
+    throw error;
+  }
+}
+
 // Fungsi untuk register game (hanya untuk admin/developer)
 export async function registerGame(
   gameAddress: string,
