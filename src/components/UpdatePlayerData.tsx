@@ -193,14 +193,12 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
         errorMsg += 'Transaction was rejected by user.';
       } else if (error.message?.includes('insufficient funds')) {
         errorMsg += 'Insufficient MON tokens for gas fee.';
-      } else if (error.message?.includes('execution reverted')) {
-        errorMsg += 'Smart contract rejected the transaction.';
       } else if (error.message?.includes('AccessControlUnauthorizedAccount')) {
-        errorMsg += 'Access denied: Your wallet does not have GAME_ROLE permission.';
+        errorMsg += `Access Control Error: The connected wallet (${walletAddress?.slice(0, 6)}...${walletAddress?.slice(-4)}) does not have GAME_ROLE permission. Only wallets with GAME_ROLE can submit scores to the blockchain. Contact Monad team to get GAME_ROLE for your wallet, or use a wallet that already has the permission.`;
+      } else if (error.message?.includes('execution reverted') || error.message?.includes('contract function') || error.message?.includes('reverted')) {
+        errorMsg += 'Smart contract rejected the transaction. This usually means the connected wallet needs GAME_ROLE permission.';
       } else if (error.message?.includes('GAME_ROLE')) {
-        errorMsg += 'You need GAME_ROLE permission to update player data.';
-      } else if (error.message?.includes('not registered')) {
-        errorMsg += 'Game must be registered first.';
+        errorMsg += 'GAME_ROLE permission required. The connected wallet must have GAME_ROLE to submit data to the blockchain.';
       } else if (error.message?.includes('network')) {
         errorMsg += 'Network connection issue. Please check your connection to Monad Testnet.';
       } else {
@@ -253,6 +251,14 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
 
       {authenticated && walletAddress && (
         <>
+          {/* Important Notice */}
+          <div className="info-section">
+            <h3>⚠️ Important Notice</h3>
+            <p>To submit data to the Monad Games ID contract, your <strong>connected wallet</strong> must have GAME_ROLE permission from the Monad team.</p>
+            <p>Player Address can be any valid address, but the transaction must be signed by a wallet with GAME_ROLE.</p>
+            <p><strong>Connected Wallet:</strong> {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</p>
+          </div>
+
           {/* Current Player Data */}
           {currentPlayerData && (
             <div className="current-data-section">
