@@ -6,6 +6,7 @@ import { IntegrationStatus } from './components/IntegrationStatus';
 import { MonadSetupGuide } from './components/MonadSetupGuide';
 import './App.css';
 import { useEffect, useState } from 'react';
+import { hasGameRole } from './lib/gameRegistration';
 
 function App() {
   // Main hook from Privy to access authentication status and user data
@@ -16,6 +17,7 @@ function App() {
   const [monadUsername, setMonadUsername] = useState<string>('');
   const [hasUsername, setHasUsername] = useState<boolean>(false);
   const [isCheckingUsername, setIsCheckingUsername] = useState<boolean>(false);
+  const [userHasGameRole, setUserHasGameRole] = useState<boolean>(false);
 
   // Check for Monad Games ID cross-app account and username
   useEffect(() => {
@@ -42,8 +44,9 @@ function App() {
               setMonadWalletAddress(walletAddress);
               console.log("🔑 Monad Games ID wallet address:", walletAddress);
               
-              // Check username
+              // Check username and game role
               await checkUsername(walletAddress);
+              await checkGameRole(walletAddress);
             } else {
               console.log("⚠️ No embedded wallets found in cross-app account");
             }
@@ -78,13 +81,29 @@ function App() {
       } else {
         setHasUsername(false);
         setMonadUsername('');
-        console.log("⚠️ No username registered");
+        console.log("⚠️ No username registered for wallet:", walletAddress);
+        console.log("💡 Player should register at: https://monad-games-id-site.vercel.app/");
       }
     } catch (error) {
       console.error("❌ Error checking username:", error);
       setHasUsername(false);
     } finally {
       setIsCheckingUsername(false);
+    }
+  };
+
+  // Function to check game role permission
+  const checkGameRole = async (walletAddress: string) => {
+    if (!walletAddress) return;
+    
+    try {
+      console.log("🔍 Checking GAME_ROLE for wallet:", walletAddress);
+      const hasRole = await hasGameRole(walletAddress);
+      setUserHasGameRole(hasRole);
+      console.log("🎮 GAME_ROLE status:", hasRole ? "✅ GRANTED" : "❌ NOT GRANTED");
+    } catch (error) {
+      console.error("❌ Error checking game role:", error);
+      setUserHasGameRole(false);
     }
   };
 
@@ -104,6 +123,14 @@ function App() {
       hasUsername: hasUsername
     });
   }, [ready, authenticated, user, monadWalletAddress, monadUsername, hasUsername]);
+
+  // Refresh game role status when wallet address changes
+  useEffect(() => {
+    if (monadWalletAddress) {
+      console.log("🔄 Refreshing game role status...");
+      checkGameRole(monadWalletAddress);
+    }
+  }, [monadWalletAddress]);
 
   // Show loading message while Privy is initializing
   if (!ready) {
@@ -127,7 +154,7 @@ function App() {
   return (
     <div className="container">
       <header className="header">
-        <h1>Nadilo - Crypto Clash</h1>
+        <h1>Renaz - Crypto Clash</h1>
         {authenticated && (
           <div className="user-info">
             {/* Show Monad Games ID status */}
@@ -173,7 +200,7 @@ function App() {
               gameAddress={gameAddress}
               playerAddress={monadWalletAddress || user?.wallet?.address || ''}
               gameRegistered={true} // You've already registered
-              hasGameRole={false} // You'll need to get this permission
+              hasGameRole={userHasGameRole} // Now using real status from blockchain
             />
             
             {/* Integration Status */}

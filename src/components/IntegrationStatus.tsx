@@ -49,7 +49,7 @@ export const IntegrationStatus: React.FC<IntegrationStatusProps> = ({ gameAddres
     try {
       const result = await registerGame(
         gameAddress,
-        'Nadilo - Crypto Clash',
+        'Renaz - Crypto Clash',
         '', // Add your game image URL here
         window.location.origin // Use current domain as game URL
       );

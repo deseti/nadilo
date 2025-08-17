@@ -74,7 +74,7 @@ To get GAME_ROLE permission for Monad Games ID:
 2. 📋 Provide Information:
    - Your wallet address: ${playerAddress}
    - Game contract address: ${gameAddress}
-   - Game name: Nadilo - Crypto Clash
+   - Game name: Renaz - Crypto Clash
    - Game description: Token collection arena game
    - Proof of ownership/development
 
