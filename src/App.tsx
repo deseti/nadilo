@@ -2,6 +2,7 @@ import { usePrivy, type CrossAppAccountWithMetadata } from '@privy-io/react-auth
 import { Game } from './components/Game';
 import { Leaderboard } from './components/Leaderboard';
 import { AddressEditor } from './components/AddressEditor';
+import { UpdatePlayerData } from './components/UpdatePlayerData';
 import { autoSubmitScore } from './lib/autoScoreSubmit';
 import './App.css';
 import { useEffect, useState } from 'react';
@@ -20,6 +21,9 @@ function App() {
   
   // State for address editing
   const [effectivePlayerAddress, setEffectivePlayerAddress] = useState<string>('');
+  
+  // State for navigation tabs
+  const [activeTab, setActiveTab] = useState<'game' | 'admin'>('game');
 
   // Check for Monad Games ID cross-app account and username
   useEffect(() => {
@@ -240,16 +244,58 @@ function App() {
               />
             )}
             
-            <div className="game-section">
-              {/* Pass the unique playerID as a prop to the Game component */}
-              <Game 
-                playerID={playerID} 
-                onScoreUpdate={handleScoreUpdate}
-              />
+            {/* Navigation tabs */}
+            <div className="tabs-container">
+              <div className="tabs">
+                <button 
+                  className={`tab ${activeTab === 'game' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('game')}
+                >
+                  🎮 Game & Leaderboard
+                </button>
+                <button 
+                  className={`tab ${activeTab === 'admin' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('admin')}
+                >
+                  ⚙️ Admin Panel
+                </button>
+              </div>
             </div>
-            <div className="leaderboard-section">
-              <Leaderboard playerID={playerID} />
-            </div>
+
+            {/* Tab content */}
+            {activeTab === 'game' && (
+              <>
+                <div className="game-section">
+                  {/* Pass the unique playerID as a prop to the Game component */}
+                  <Game 
+                    playerID={playerID} 
+                    onScoreUpdate={handleScoreUpdate}
+                  />
+                </div>
+                <div className="leaderboard-section">
+                  <Leaderboard playerID={playerID} />
+                </div>
+              </>
+            )}
+
+            {activeTab === 'admin' && (
+              <div className="admin-section">
+                <div className="admin-grid">
+                  <div className="admin-card">
+                    <UpdatePlayerData
+                      defaultGameAddress={gameAddress}
+                      onUpdateSuccess={() => {
+                        console.log('✅ Player data updated successfully');
+                        // Optionally refresh leaderboard or show success message
+                      }}
+                      onUpdateError={(error) => {
+                        console.error('❌ Failed to update player data:', error);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="login-container">
