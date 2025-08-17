@@ -69,8 +69,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         theme: 'dark',
         accentColor: '#676FFF',
       },
-      // Support multiple login methods including Monad Games ID
-      loginMethods: ['email', 'wallet'],
+            // Support only email login for Monad Games ID integration
+      loginMethods: ['email'],
       
       // Configure cross-app wallets for Monad Games ID
       externalWallets: {

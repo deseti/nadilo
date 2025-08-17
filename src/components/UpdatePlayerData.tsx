@@ -343,6 +343,23 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
                 </div>
               )}
             </div>
+            
+            <div style={{ 
+              marginTop: '12px', 
+              padding: '10px', 
+              background: 'rgba(255, 193, 7, 0.1)', 
+              border: '1px solid rgba(255, 193, 7, 0.3)',
+              borderRadius: '6px'
+            }}>
+              <small style={{ color: '#ffc107' }}>
+                <strong>💡 Cross-App Integration Status:</strong><br/>
+                For true Monad Games ID integration, cross-app authentication must be configured in your Privy dashboard. 
+                Without this, each app creates separate embedded wallets instead of sharing the same wallet across apps.
+                <br/><br/>
+                <strong>Current situation:</strong> Your Renaz app creates wallet `{walletAddress?.slice(0, 8)}...` while 
+                Monad Games ID site creates a different wallet. This is expected until cross-app is properly configured.
+              </small>
+            </div>
           </div>
 
           {/* Wallet Information */}

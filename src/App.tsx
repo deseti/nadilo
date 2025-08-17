@@ -232,7 +232,7 @@ function App() {
               <div className="monad-status">
                 <span>⚠️ No Monad Games ID linked</span>
                 <small style={{ display: 'block', color: '#888', fontSize: '10px', marginTop: '4px' }}>
-                  Please logout and sign in again with Monad Games ID
+                  Dashboard configuration required for cross-app integration
                 </small>
               </div>
             )}
@@ -345,6 +345,42 @@ function App() {
             <p style={{ fontSize: '12px', color: '#888', marginTop: '15px' }}>
               New to Monad Games ID? <a href="https://monad-games-id-site.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: '#676FFF' }}>Register here</a>
             </p>
+            
+            <div style={{ 
+              marginTop: '20px', 
+              padding: '15px', 
+              background: 'rgba(255, 191, 36, 0.1)', 
+              border: '1px solid rgba(255, 191, 36, 0.3)', 
+              borderRadius: '8px',
+              fontSize: '12px',
+              color: '#fbbf24'
+            }}>
+              <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔧 Developer Note:</p>
+              <p style={{ margin: '0 0 8px 0' }}>
+                For Monad Games ID integration to work, you need to configure cross-app settings in your Privy Dashboard:
+              </p>
+              <ol style={{ margin: '0', paddingLeft: '16px' }}>
+                <li>Go to your Privy Dashboard</li>
+                <li>Navigate to Cross-app or Global Wallets settings</li>
+                <li>Add Monad Games ID as a provider with ID: <code>cmd8euall0037le0my79qpz42</code></li>
+                <li>Enable cross-app wallet sharing</li>
+              </ol>
+            </div>
+            
+            <div style={{ 
+              marginTop: '20px', 
+              padding: '15px', 
+              background: 'rgba(255, 193, 7, 0.1)', 
+              border: '1px solid rgba(255, 193, 7, 0.3)',
+              borderRadius: '8px',
+              fontSize: '12px',
+              color: '#ffc107'
+            }}>
+              <strong>⚠️ Cross-App Integration Notice:</strong><br/>
+              For full Monad Games ID integration, cross-app authentication needs to be configured in the Privy dashboard. 
+              Currently, each app creates separate embedded wallets. 
+              Contact Privy support to enable cross-app wallet sharing between your app and Monad Games ID.
+            </div>
           </div>
         )}
       </main>
