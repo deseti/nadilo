@@ -10,7 +10,7 @@ import { hasGameRole } from './lib/gameRegistration';
 
 function App() {
   // Main hook from Privy to access authentication status and user data
-  const { ready, authenticated, login, logout, user, getAccessToken } = usePrivy();
+  const { ready, authenticated, login, logout, user } = usePrivy();
   
   // State for Monad Games ID integration
   const [monadWalletAddress, setMonadWalletAddress] = useState<string>('');
@@ -25,52 +25,34 @@ function App() {
   // State for navigation tabs
   const [activeTab, setActiveTab] = useState<'game' | 'admin'>('game');
 
+  // ==================================================================
+  // === BAGIAN YANG DIPERBAIKI ADA DI DALAM useEffect DI BAWAH INI ===
+  // ==================================================================
   // Check for Monad Games ID cross-app account and username
   useEffect(() => {
     const checkMonadGamesID = async () => {
       if (authenticated && user && ready) {
-        console.log("🔍 Checking for Monad Games ID integration...");
-        console.log("🔧 Cross App ID:", import.meta.env.VITE_MONAD_GAMES_ID);
+        console.log("🔍 Mengecek integrasi Monad Games ID...");
         
-        // Check if user has linkedAccounts
-        if (user.linkedAccounts.length > 0) {
-          console.log("📋 User has linked accounts:", user.linkedAccounts.length);
-          
-          // Debug: log all linked accounts
-          user.linkedAccounts.forEach((account, index) => {
-            console.log(`📋 Account ${index}:`, {
-              type: account.type,
-              providerAppId: account.type === 'cross_app' ? (account as any).providerApp?.id : 'N/A'
-            });
-          });
-          
-          // Get the cross app account created using Monad Games ID
-          const crossAppAccount: CrossAppAccountWithMetadata = user.linkedAccounts.filter(
-            account => account.type === "cross_app" && 
-            account.providerApp.id === import.meta.env.VITE_MONAD_GAMES_ID
-          )[0] as CrossAppAccountWithMetadata;
+        // Cari akun yang merupakan cross-app dan punya providerApp.id yang sesuai dari .env
+        const monadAccount = user.linkedAccounts.find(
+          (account) =>
+            account.type === 'cross_app' &&
+            'providerApp' in account && // Memastikan properti ini ada
+            (account as any).providerApp?.id === import.meta.env.VITE_MONAD_GAMES_ID
+        ) as CrossAppAccountWithMetadata | undefined;
 
-          if (crossAppAccount) {
-            console.log("✅ Found Monad Games ID cross-app account:", crossAppAccount);
-            
-            // The first embedded wallet created using Monad Games ID, is the wallet address
-            if (crossAppAccount.embeddedWallets.length > 0) {
-              const walletAddress = crossAppAccount.embeddedWallets[0].address;
-              setMonadWalletAddress(walletAddress);
-              console.log("🔑 Monad Games ID wallet address:", walletAddress);
-              
-              // Check username and game role
-              await checkUsername(walletAddress);
-              await checkGameRole(walletAddress);
-            } else {
-              console.log("⚠️ No embedded wallets found in cross-app account");
-            }
-          } else {
-            console.log("⚠️ No Monad Games ID cross-app account found");
-            console.log("🔍 Looking for Cross App ID:", import.meta.env.VITE_MONAD_GAMES_ID);
-          }
+        if (monadAccount && monadAccount.embeddedWallets.length > 0) {
+          const walletAddress = monadAccount.embeddedWallets[0].address;
+          console.log("✅ Monad Games ID Wallet ditemukan:", walletAddress);
+          setMonadWalletAddress(walletAddress);
+
+          // Cek username & game role setelah mendapatkan wallet address
+          await checkUsername(walletAddress);
+          await checkGameRole(walletAddress);
         } else {
-          console.log("⚠️ User has no linked accounts");
+          console.log("⚠️ Akun Monad Games ID tidak ditemukan atau tidak memiliki embedded wallet.");
+          console.log("Pastikan VITE_MONAD_GAMES_ID di file .env sudah benar:", import.meta.env.VITE_MONAD_GAMES_ID);
         }
       }
     };
@@ -326,8 +308,7 @@ function App() {
                 onClick={async () => {
                   console.log("🚀 Starting Monad Games ID login...");
                   try {
-                    const result = await login();
-                    console.log("✅ Monad Games ID login result:", result);
+                    await login();
                   } catch (error) {
                     console.error("❌ Monad Games ID login error:", error);
                   }
@@ -353,7 +334,8 @@ function App() {
               border: '1px solid rgba(255, 191, 36, 0.3)', 
               borderRadius: '8px',
               fontSize: '12px',
-              color: '#fbbf24'
+              color: '#fbbf24',
+              textAlign: 'left'
             }}>
               <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔧 Developer Note:</p>
               <p style={{ margin: '0 0 8px 0' }}>
@@ -374,7 +356,8 @@ function App() {
               border: '1px solid rgba(255, 193, 7, 0.3)',
               borderRadius: '8px',
               fontSize: '12px',
-              color: '#ffc107'
+              color: '#ffc107',
+              textAlign: 'left'
             }}>
               <strong>⚠️ Cross-App Integration Notice:</strong><br/>
               For full Monad Games ID integration, cross-app authentication needs to be configured in the Privy dashboard. 
