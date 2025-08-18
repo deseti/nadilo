@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
-import { syncWithMonadGamesId, getSavedAddressMapping, manualAddressSync, AddressSyncData } from '../lib/addressSync';
+import { syncWithMonadGamesId, getSavedAddressMapping, manualAddressSync } from '../lib/addressSync';
+import type { AddressSyncData } from '../lib/addressSync';
 import './AddressSync.css';
 
 interface AddressSyncProps {
