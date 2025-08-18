@@ -6,6 +6,7 @@ import { AddressSync } from './components/AddressSync';
 import { MonadAddressVerification } from './components/MonadAddressVerification';
 import { UpdatePlayerData } from './components/UpdatePlayerData';
 import { autoSubmitScore } from './lib/autoScoreSubmit';
+import { useMonadGamesUser } from './hooks/useMonadGamesUser';
 import './App.css';
 import { useEffect, useState } from 'react';
 import { hasGameRole } from './lib/gameRegistration';
@@ -16,9 +17,6 @@ function App() {
   
   // State for Monad Games ID integration
   const [monadWalletAddress, setMonadWalletAddress] = useState<string>('');
-  const [monadUsername, setMonadUsername] = useState<string>('');
-  const [hasUsername, setHasUsername] = useState<boolean>(false);
-  const [isCheckingUsername, setIsCheckingUsername] = useState<boolean>(false);
   const [userHasGameRole, setUserHasGameRole] = useState<boolean>(false);
   
   // State for address editing and sync
@@ -28,70 +26,46 @@ function App() {
   // State for navigation tabs
   const [activeTab, setActiveTab] = useState<'game' | 'admin'>('game');
 
-  // ==================================================================
-  // === BAGIAN YANG DIPERBAIKI ADA DI DALAM useEffect DI BAWAH INI ===
-  // ==================================================================
-  // Check for Monad Games ID cross-app account and username
+  // Use the custom hook for Monad Games ID user data
+  const { 
+    user: monadUser, 
+    hasUsername, 
+    isLoading: isLoadingUser, 
+    error: userError 
+  } = useMonadGamesUser(monadWalletAddress);
+
+  // Check for Monad Games ID cross-app account
   useEffect(() => {
     const checkMonadGamesID = async () => {
       if (authenticated && user && ready) {
-        console.log("🔍 Mengecek integrasi Monad Games ID...");
+        console.log("🔍 Checking Monad Games ID integration...");
         
-        // Cari akun yang merupakan cross-app dan punya providerApp.id yang sesuai dari .env
-        const monadAccount = user.linkedAccounts.find(
-          (account) =>
-            account.type === 'cross_app' &&
-            'providerApp' in account && // Memastikan properti ini ada
-            (account as any).providerApp?.id === import.meta.env.VITE_MONAD_GAMES_ID
-        ) as CrossAppAccountWithMetadata | undefined;
+        // Check if user has linkedAccounts
+        if (user.linkedAccounts.length > 0) {
+          // Get the cross app account created using Monad Games ID
+          const crossAppAccount: CrossAppAccountWithMetadata = user.linkedAccounts.filter(
+            account => account.type === "cross_app" && 
+            account.providerApp.id === "cmd8euall0037le0my79qpz42"
+          )[0] as CrossAppAccountWithMetadata;
 
-        if (monadAccount && monadAccount.embeddedWallets.length > 0) {
-          const walletAddress = monadAccount.embeddedWallets[0].address;
-          console.log("✅ Monad Games ID Wallet ditemukan:", walletAddress);
-          setMonadWalletAddress(walletAddress);
+          // The first embedded wallet created using Monad Games ID, is the wallet address
+          if (crossAppAccount && crossAppAccount.embeddedWallets.length > 0) {
+            const walletAddress = crossAppAccount.embeddedWallets[0].address;
+            console.log("✅ Monad Games ID Wallet found:", walletAddress);
+            setMonadWalletAddress(walletAddress);
 
-          // Cek username & game role setelah mendapatkan wallet address
-          await checkUsername(walletAddress);
-          await checkGameRole(walletAddress);
+            // Check game role after getting wallet address
+            await checkGameRole(walletAddress);
+          }
         } else {
-          console.log("⚠️ Akun Monad Games ID tidak ditemukan atau tidak memiliki embedded wallet.");
-          console.log("Pastikan VITE_MONAD_GAMES_ID di file .env sudah benar:", import.meta.env.VITE_MONAD_GAMES_ID);
+          console.log("⚠️ You need to link your Monad Games ID account to continue.");
+          console.log("💡 Please login with Monad Games ID first at: https://monad-games-id-site.vercel.app/");
         }
       }
     };
 
     checkMonadGamesID();
   }, [authenticated, user, ready]);
-
-  // Function to check username from Monad Games ID API
-  const checkUsername = async (walletAddress: string) => {
-    if (!walletAddress) return;
-    
-    setIsCheckingUsername(true);
-    try {
-      console.log("🔍 Checking username for wallet:", walletAddress);
-      const response = await fetch(`https://monad-games-id-site.vercel.app/api/check-wallet?wallet=${walletAddress}`);
-      const data = await response.json();
-      
-      console.log("📊 Username check response:", data);
-      
-      if (data.hasUsername && data.user) {
-        setHasUsername(true);
-        setMonadUsername(data.user.username);
-        console.log("✅ Username found:", data.user.username);
-      } else {
-        setHasUsername(false);
-        setMonadUsername('');
-        console.log("⚠️ No username registered for wallet:", walletAddress);
-        console.log("💡 Player should register at: https://monad-games-id-site.vercel.app/");
-      }
-    } catch (error) {
-      console.error("❌ Error checking username:", error);
-      setHasUsername(false);
-    } finally {
-      setIsCheckingUsername(false);
-    }
-  };
 
   // Function to check game role permission
   const checkGameRole = async (walletAddress: string) => {
@@ -120,10 +94,13 @@ function App() {
         linkedAccounts: user.linkedAccounts?.length
       } : null,
       monadWallet: monadWalletAddress,
-      monadUsername: monadUsername,
+      monadUser: monadUser ? {
+        username: monadUser.username,
+        id: monadUser.id
+      } : null,
       hasUsername: hasUsername
     });
-  }, [ready, authenticated, user, monadWalletAddress, monadUsername, hasUsername]);
+  }, [ready, authenticated, user, monadWalletAddress, monadUser, hasUsername]);
 
   // Refresh game role status when wallet address changes
   useEffect(() => {
@@ -147,7 +124,7 @@ function App() {
   // Function to handle score updates from the game
   const handleScoreUpdate = async (score: number, transactions: number) => {
     const address = effectivePlayerAddress || monadWalletAddress || user?.wallet?.address;
-    const playerName = monadUsername || user?.email?.address || 'Anonymous';
+    const playerName = monadUser?.username || user?.email?.address || 'Anonymous';
     
     if (address && score > 0) {
       console.log('🎯 Game finished! Auto-submitting score:', {
@@ -173,10 +150,10 @@ function App() {
     }
   };
 
-  // Determine the player's identifier. Use effective address if set, otherwise prioritize Monad Games ID wallet, then regular wallet, email, or user ID
+  // Determine the player's identifier
   const defaultAddress = monadWalletAddress || user?.wallet?.address || '';
   const playerID = effectivePlayerAddress || defaultAddress || user?.email?.address || user?.id || 'Anonymous';
-  const displayName = monadUsername || user?.email?.address || user?.id || 'Anonymous';
+  const displayName = monadUser?.username || user?.email?.address || user?.id || 'Anonymous';
   
   // Game address - using your actual registered game address
   const gameAddress = '0x5b84Dc548e45cC4f1498b95C000C748c1c953f64';
@@ -191,10 +168,10 @@ function App() {
             {/* Show Monad Games ID status */}
             {monadWalletAddress ? (
               <div className="monad-status">
-                {isCheckingUsername ? (
+                {isLoadingUser ? (
                   <span>🔍 Checking username...</span>
-                ) : hasUsername ? (
-                  <span>🎮 {monadUsername} (Monad Games ID)</span>
+                ) : hasUsername && monadUser ? (
+                  <span>🎮 {monadUser.username} (Monad Games ID)</span>
                 ) : (
                   <div>
                     <span>⚠️ Monad Games ID connected but no username</span>
@@ -217,7 +194,7 @@ function App() {
               <div className="monad-status">
                 <span>⚠️ No Monad Games ID linked</span>
                 <small style={{ display: 'block', color: '#888', fontSize: '10px', marginTop: '4px' }}>
-                  Dashboard configuration required for cross-app integration
+                  Cross-app authentication needed
                 </small>
               </div>
             )}
@@ -368,26 +345,25 @@ function App() {
               </p>
               <ol style={{ margin: '0', paddingLeft: '16px' }}>
                 <li>Go to your Privy Dashboard</li>
-                <li>Navigate to Cross-app or Global Wallets settings</li>
-                <li>Add Monad Games ID as a provider with ID: <code>cmd8euall0037le0my79qpz42</code></li>
-                <li>Enable cross-app wallet sharing</li>
+                <li>Navigate to Global Wallets → Integrations</li>
+                <li>Find Monad Games ID and enable the integration</li>
+                <li>Configure your app as a provider in Global Wallets → My app</li>
               </ol>
             </div>
             
             <div style={{ 
               marginTop: '20px', 
               padding: '15px', 
-              background: 'rgba(255, 193, 7, 0.1)', 
-              border: '1px solid rgba(255, 193, 7, 0.3)',
+              background: 'rgba(59, 130, 246, 0.1)', 
+              border: '1px solid rgba(59, 130, 246, 0.3)',
               borderRadius: '8px',
               fontSize: '12px',
-              color: '#ffc107',
+              color: '#3b82f6',
               textAlign: 'left'
             }}>
-              <strong>⚠️ Cross-App Integration Notice:</strong><br/>
-              For full Monad Games ID integration, cross-app authentication needs to be configured in the Privy dashboard. 
-              Currently, each app creates separate embedded wallets. 
-              Contact Privy support to enable cross-app wallet sharing between your app and Monad Games ID.
+              <strong>✅ Integration Status:</strong><br/>
+              Your app is configured to use Monad Games ID cross-app authentication. 
+              Users who have registered with Monad Games ID will be able to login and use their existing wallet and username.
             </div>
           </div>
         )}

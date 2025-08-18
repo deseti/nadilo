@@ -4,7 +4,6 @@ import App from './App.tsx';
 import './index.css';
 import { PrivyProvider } from '@privy-io/react-auth';
 import { defineChain } from 'viem';
-// Remove other chains imports - only allow Monad
 
 // 1. Define the Monad Testnet chain manually with correct RPC from official docs
 const monadTestnet = defineChain({
@@ -38,7 +37,7 @@ console.log("Monad Testnet configured:", {
   rpc: monadTestnet.rpcUrls.default.http[0]
 });
 
-// 2. Securely access the App ID from environment variables
+// 2. Get your own Privy App ID from environment variables
 const privyAppId = import.meta.env.VITE_PRIVY_APP_ID;
 
 console.log("Environment check:", {
@@ -69,19 +68,24 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         theme: 'dark',
         accentColor: '#676FFF',
       },
-            // Support only email login for Monad Games ID integration
-      loginMethods: ['email'],
       
-      // Configure cross-app wallets for Monad Games ID
+      // Configure login methods - INI YANG PALING PENTING untuk Monad Games ID integration
+      loginMethodsAndOrder: {
+        // Don't forget to enable Monad Games ID support in:
+        // Global Wallet > Integrations > Monad Games ID (click on the slide to enable)
+        primary: ["privy:cmd8euall0037le0my79qpz42"], // This is the Cross App ID, DO NOT CHANGE THIS
+      },
+      
+      // Configure embedded wallets
+      embeddedWallets: {
+        createOnLogin: 'users-without-wallets',
+      },
+      
+      // Configure external wallets
       externalWallets: {
         coinbaseWallet: {
           connectionOptions: 'smartWalletOnly'
         }
-      },
-      
-      // Configure wallet options
-      embeddedWallets: {
-        createOnLogin: 'users-without-wallets',
       },
       
       // Disable WalletConnect to prevent duplicate init
