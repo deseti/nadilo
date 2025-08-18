@@ -122,7 +122,7 @@ export const IntegrationStatus: React.FC<IntegrationStatusProps> = ({ gameAddres
 
       {!isRegistered && !canRegister && user?.wallet?.address && (
         <div className="info-section">
-          <p>⚠️ This game needs to be registered by an admin with GAME_ROLE permission.</p>
+          <p>⚠️ This game needs to be registered by someone with GAME_ROLE permission.</p>
         </div>
       )}
 

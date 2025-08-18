@@ -218,7 +218,7 @@ export async function updatePlayerDataWithPrivy(
   }
 }
 
-// Fungsi untuk register game (hanya untuk admin/developer)
+// Function to register game
 export async function registerGame(
   gameAddress: string,
   gameName: string,

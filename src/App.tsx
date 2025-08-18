@@ -4,7 +4,6 @@ import { Leaderboard } from './components/Leaderboard';
 import { AddressEditor } from './components/AddressEditor';
 import { AddressSync } from './components/AddressSync';
 import { MonadAddressVerification } from './components/MonadAddressVerification';
-import { UpdatePlayerData } from './components/UpdatePlayerData';
 import { autoSubmitScore } from './lib/autoScoreSubmit';
 import { useMonadGamesUser } from './hooks/useMonadGamesUser';
 import './App.css';
@@ -22,9 +21,6 @@ function App() {
   // State for address editing and sync
   const [effectivePlayerAddress, setEffectivePlayerAddress] = useState<string>('');
   const [syncedMonadAddress, setSyncedMonadAddress] = useState<string>('');
-  
-  // State for navigation tabs
-  const [activeTab, setActiveTab] = useState<'game' | 'admin'>('game');
 
   // Use the custom hook for Monad Games ID user data
   const { 
@@ -245,59 +241,17 @@ function App() {
               />
             )}
             
-            {/* Navigation tabs */}
-            <div className="tabs-container">
-              <div className="tabs">
-                <button 
-                  className={`tab ${activeTab === 'game' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('game')}
-                >
-                  🎮 Game & Leaderboard
-                </button>
-                <button 
-                  className={`tab ${activeTab === 'admin' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('admin')}
-                >
-                  ⚙️ Admin Panel
-                </button>
-              </div>
+            {/* Game and Leaderboard */}
+            <div className="game-section">
+              {/* Pass the unique playerID as a prop to the Game component */}
+              <Game 
+                playerID={playerID} 
+                onScoreUpdate={handleScoreUpdate}
+              />
             </div>
-
-            {/* Tab content */}
-            {activeTab === 'game' && (
-              <>
-                <div className="game-section">
-                  {/* Pass the unique playerID as a prop to the Game component */}
-                  <Game 
-                    playerID={playerID} 
-                    onScoreUpdate={handleScoreUpdate}
-                  />
-                </div>
-                <div className="leaderboard-section">
-                  <Leaderboard playerID={playerID} />
-                </div>
-              </>
-            )}
-
-            {activeTab === 'admin' && (
-              <div className="admin-section">
-                <div className="admin-grid">
-                  <div className="admin-card">
-                    <UpdatePlayerData
-                      defaultGameAddress={gameAddress}
-                      monadWalletAddress={monadWalletAddress}
-                      onUpdateSuccess={() => {
-                        console.log('✅ Player data updated successfully');
-                        // Optionally refresh leaderboard or show success message
-                      }}
-                      onUpdateError={(error) => {
-                        console.error('❌ Failed to update player data:', error);
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+            <div className="leaderboard-section">
+              <Leaderboard playerID={playerID} />
+            </div>
           </div>
         ) : (
           <div className="login-container">
