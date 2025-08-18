@@ -2,6 +2,8 @@ import { usePrivy, type CrossAppAccountWithMetadata } from '@privy-io/react-auth
 import { Game } from './components/Game';
 import { Leaderboard } from './components/Leaderboard';
 import { AddressEditor } from './components/AddressEditor';
+import { AddressSync } from './components/AddressSync';
+import { MonadAddressVerification } from './components/MonadAddressVerification';
 import { UpdatePlayerData } from './components/UpdatePlayerData';
 import { autoSubmitScore } from './lib/autoScoreSubmit';
 import './App.css';
@@ -19,8 +21,9 @@ function App() {
   const [isCheckingUsername, setIsCheckingUsername] = useState<boolean>(false);
   const [userHasGameRole, setUserHasGameRole] = useState<boolean>(false);
   
-  // State for address editing
+  // State for address editing and sync
   const [effectivePlayerAddress, setEffectivePlayerAddress] = useState<string>('');
+  const [syncedMonadAddress, setSyncedMonadAddress] = useState<string>('');
   
   // State for navigation tabs
   const [activeTab, setActiveTab] = useState<'game' | 'admin'>('game');
@@ -182,7 +185,7 @@ function App() {
   return (
     <div className="container">
       <header className="header">
-        <h1>Renaz - Crypto Clash</h1>
+        <h1>Nadilo - Crypto Clash</h1>
         {authenticated && (
           <div className="user-info">
             {/* Show Monad Games ID status */}
@@ -240,6 +243,28 @@ function App() {
                   console.log('🔧 Address changed to:', newAddress);
                 }}
                 isMonadGamesConnected={!!monadWalletAddress}
+              />
+            )}
+
+            {/* Address Sync Component */}
+            {user?.email?.address && (
+              <AddressSync
+                currentAddress={effectivePlayerAddress || defaultAddress}
+                onAddressSync={(monadAddress) => {
+                  setSyncedMonadAddress(monadAddress);
+                  setEffectivePlayerAddress(monadAddress);
+                  console.log('🔗 Synced with Monad address:', monadAddress);
+                }}
+              />
+            )}
+
+            {/* Monad Address Verification */}
+            {(effectivePlayerAddress || syncedMonadAddress) && (
+              <MonadAddressVerification
+                address={effectivePlayerAddress || syncedMonadAddress || defaultAddress}
+                onVerificationResult={(result) => {
+                  console.log('🔍 Verification result:', result);
+                }}
               />
             )}
             

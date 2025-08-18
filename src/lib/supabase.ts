@@ -28,3 +28,14 @@ export interface PlayerStats {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface AddressSyncEntry {
+  id?: number;
+  email: string;
+  nadilo_address: string;
+  monad_games_id_address?: string;
+  last_sync_at: string;
+  sync_status: 'pending' | 'synced' | 'failed';
+  created_at?: string;
+  updated_at?: string;
+}

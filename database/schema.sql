@@ -74,3 +74,48 @@ CREATE TRIGGER trigger_update_player_stats
   AFTER INSERT ON leaderboard
   FOR EACH ROW
   EXECUTE FUNCTION update_player_stats();
+
+-- Create address_sync table for cross-platform integration
+CREATE TABLE IF NOT EXISTS address_sync (
+  id BIGSERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  nadilo_address TEXT NOT NULL,
+  monad_games_id_address TEXT,
+  last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  sync_status TEXT CHECK (sync_status IN ('pending', 'synced', 'failed')) DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for address_sync
+CREATE INDEX IF NOT EXISTS idx_address_sync_email ON address_sync(email);
+CREATE INDEX IF NOT EXISTS idx_address_sync_nadilo_address ON address_sync(nadilo_address);
+CREATE INDEX IF NOT EXISTS idx_address_sync_monad_address ON address_sync(monad_games_id_address);
+
+-- Enable RLS for address_sync
+ALTER TABLE address_sync ENABLE ROW LEVEL SECURITY;
+
+-- Policies for address_sync
+CREATE POLICY "Allow public read access on address_sync" ON address_sync
+  FOR SELECT USING (true);
+
+CREATE POLICY "Allow authenticated insert on address_sync" ON address_sync
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated update on address_sync" ON address_sync
+  FOR UPDATE USING (true);
+
+-- Function to update timestamp on address_sync updates
+CREATE OR REPLACE FUNCTION update_address_sync_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger for address_sync updated_at
+CREATE TRIGGER trigger_address_sync_updated_at
+  BEFORE UPDATE ON address_sync
+  FOR EACH ROW
+  EXECUTE FUNCTION update_address_sync_updated_at();

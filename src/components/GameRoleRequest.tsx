@@ -9,7 +9,7 @@ interface GameRoleRequestProps {
 export const GameRoleRequest: React.FC<GameRoleRequestProps> = ({
   playerAddress,
   gameAddress,
-  gameName = 'Renaz - Crypto Clash'
+  gameName = 'Nadilo - Crypto Clash'
 }) => {
   const [emailCopied, setEmailCopied] = useState(false);
   const [templateCopied, setTemplateCopied] = useState(false);

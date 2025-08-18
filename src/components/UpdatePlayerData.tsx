@@ -356,7 +356,7 @@ export const UpdatePlayerData: React.FC<UpdatePlayerDataProps> = ({
                 For true Monad Games ID integration, cross-app authentication must be configured in your Privy dashboard. 
                 Without this, each app creates separate embedded wallets instead of sharing the same wallet across apps.
                 <br/><br/>
-                <strong>Current situation:</strong> Your Renaz app creates wallet `{walletAddress?.slice(0, 8)}...` while 
+                <strong>Current situation:</strong> Your Nadilo app creates wallet `{walletAddress?.slice(0, 8)}...` while 
                 Monad Games ID site creates a different wallet. This is expected until cross-app is properly configured.
               </small>
             </div>

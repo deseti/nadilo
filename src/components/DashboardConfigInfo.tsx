@@ -12,7 +12,7 @@ export const DashboardConfigInfo: React.FC = () => {
           <span className="step-number">1</span>
           <div className="step-content">
             <strong>Login to Privy Dashboard</strong>
-            <p>Visit <a href="https://dashboard.privy.io" target="_blank" rel="noopener noreferrer">dashboard.privy.io</a> and select your Renaz app</p>
+            <p>Visit <a href="https://dashboard.privy.io" target="_blank" rel="noopener noreferrer">dashboard.privy.io</a> and select your Nadilo app</p>
           </div>
         </div>
         

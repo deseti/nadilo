@@ -77,20 +77,20 @@ To submit scores to Monad Games ID blockchain, you need GAME_ROLE permission.
 📋 INFORMATION TO PROVIDE:
    • Developer wallet: ${playerAddress}
    • Game contract: ${gameAddress}
-   • Game name: "Renaz - Crypto Clash"
+   • Game name: "Nadilo - Crypto Clash"
    • Game type: Token collection arena game
    • Live demo: ${window.location.origin}
    • Repository: (if public)
 
 📄 EMAIL TEMPLATE:
-   Subject: GAME_ROLE Request for Renaz Game Integration
+   Subject: GAME_ROLE Request for Nadilo Game Integration
 
    Hello Monad Team,
 
-   I'm developing "Renaz - Crypto Clash" and would like to integrate with Monad Games ID.
+   I'm developing "Nadilo - Crypto Clash" and would like to integrate with Monad Games ID.
 
    Game Details:
-   - Name: Renaz - Crypto Clash
+   - Name: Nadilo - Crypto Clash
    - Type: Token collection arena game
    - Demo: ${window.location.origin}
    - Contract: ${gameAddress}

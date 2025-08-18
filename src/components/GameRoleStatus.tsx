@@ -10,7 +10,7 @@ interface GameRoleRequestProps {
 export const GameRoleStatus: React.FC<GameRoleRequestProps> = ({
   playerAddress = '',
   gameAddress,
-  gameName = 'Renaz - Crypto Clash',
+  gameName = 'Nadilo - Crypto Clash',
   onScoreSubmit
 }) => {
   const [emailCopied, setEmailCopied] = useState(false);

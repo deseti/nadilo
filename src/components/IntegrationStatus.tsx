@@ -50,7 +50,7 @@ export const IntegrationStatus: React.FC<IntegrationStatusProps> = ({ gameAddres
     try {
       const result = await registerGame(
         gameAddress,
-        'Renaz - Crypto Clash',
+        'Nadilo - Crypto Clash',
         '', // Add your game image URL here
         window.location.origin // Use current domain as game URL
       );
@@ -131,7 +131,7 @@ export const IntegrationStatus: React.FC<IntegrationStatusProps> = ({ gameAddres
         <GameRoleRequest
           playerAddress={user.wallet.address}
           gameAddress={gameAddress}
-          gameName="Renaz - Crypto Clash"
+          gameName="Nadilo - Crypto Clash"
         />
       )}
     </div>
