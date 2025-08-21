@@ -84,14 +84,14 @@ export class Player {
       }
     });
 
-    // Create enhanced bullet texture
+    // Create simple bullet texture for better performance
     const bulletColor = this.isPlayer ? (this.avatarData?.color || 0x00ff88) : 0xff4444;
-    this.createAdvancedBulletTexture(bulletColor, type);
+    this.createSimpleBulletTexture(bulletColor, type);
 
-    // Create enhanced particle effects for player
-    if (this.isPlayer) {
-      this.createAdvancedParticleEffects();
-    }
+    // Particle effects disabled for maximum performance
+    // if (this.isPlayer) {
+    //   this.createAdvancedParticleEffects();
+    // }
 
     // Setup collisions
     this.setupCollisions();
@@ -198,103 +198,25 @@ export class Player {
     this.sprite.setTexture(type + '_advanced_fighter');
   }
 
-  private createAdvancedBulletTexture(color: number, type: string) {
+  private createSimpleBulletTexture(color: number, type: string) {
     const bulletGraphics = this.scene.add.graphics();
 
-    if (this.isPlayer) {
-      // Enhanced energy bolt with glow
-      bulletGraphics.fillStyle(color);
-      bulletGraphics.fillEllipse(0, 0, 4, 12);
+    // Ultra-simple bullet design for maximum performance
+    bulletGraphics.fillStyle(color);
+    bulletGraphics.fillCircle(0, 0, 3); // Simple circle bullet
 
-      // Inner core
-      bulletGraphics.fillStyle(0xffffff);
-      bulletGraphics.fillEllipse(0, 0, 2, 8);
-
-      // Outer glow
-      bulletGraphics.fillStyle(color, 0.3);
-      bulletGraphics.fillEllipse(0, 0, 8, 16);
-
-      // Energy particles
-      for (let i = 0; i < 3; i++) {
-        bulletGraphics.fillStyle(0xffffff, 0.6);
-        bulletGraphics.fillCircle(
-          Phaser.Math.Between(-2, 2),
-          Phaser.Math.Between(-4, 4),
-          1
-        );
-      }
-    } else {
-      // Enemy plasma bolt
-      bulletGraphics.fillStyle(color);
-      bulletGraphics.fillCircle(0, 0, 4);
-
-      // Trailing effect
-      bulletGraphics.fillStyle(color, 0.6);
-      bulletGraphics.fillEllipse(0, 2, 3, 6);
-
-      // Core
-      bulletGraphics.fillStyle(0xff8888);
-      bulletGraphics.fillCircle(0, 0, 2);
-    }
-
-    bulletGraphics.generateTexture('bullet_' + type + '_advanced', 16, 20);
+    bulletGraphics.generateTexture('bullet_' + type + '_advanced', 6, 6);
     bulletGraphics.destroy();
   }
 
   private createAdvancedParticleEffects() {
-    // Create enhanced particle textures
-    const thrusterGraphics = this.scene.add.graphics();
-    thrusterGraphics.fillStyle(0x00aaff);
-    thrusterGraphics.fillCircle(0, 0, 3);
-    thrusterGraphics.generateTexture('thruster_particle_advanced', 6, 6);
-    thrusterGraphics.destroy();
+    // Disable all particle effects to prevent lag
+    // Particle effects are causing significant performance issues
 
-    const afterburnerGraphics = this.scene.add.graphics();
-    afterburnerGraphics.fillStyle(0xff6600);
-    afterburnerGraphics.fillCircle(0, 0, 2);
-    afterburnerGraphics.generateTexture('afterburner_particle', 4, 4);
-    afterburnerGraphics.destroy();
-
-    const damageGraphics = this.scene.add.graphics();
-    damageGraphics.fillStyle(0xff0000);
-    damageGraphics.fillCircle(0, 0, 2);
-    damageGraphics.generateTexture('damage_particle', 4, 4);
-    damageGraphics.destroy();
-
-    // Simplified thruster particles for better performance
-    this.thrusterParticles = this.scene.add.particles(0, 0, 'thruster_particle_advanced', {
-      speed: { min: 20, max: 50 }, // Reduced speed range
-      scale: { start: 0.5, end: 0 }, // Smaller particles
-      lifespan: 200, // Shorter lifespan
-      alpha: { start: 0.7, end: 0 },
-      tint: [0x00aaff, 0x0088ff],
-      emitting: false,
-      frequency: 30, // Less frequent
-      quantity: 1 // Fewer particles per emission
-    });
-
-    // Simplified afterburner effect
-    this.afterburnerParticles = this.scene.add.particles(0, 0, 'afterburner_particle', {
-      speed: { min: 30, max: 80 }, // Reduced speed
-      scale: { start: 0.8, end: 0 },
-      lifespan: 250, // Shorter lifespan
-      alpha: { start: 0.8, end: 0 },
-      tint: [0xff6600, 0xff8800],
-      emitting: false,
-      frequency: 25, // Less frequent
-      quantity: 1
-    });
-
-    // Simplified damage particles
-    this.damageParticles = this.scene.add.particles(0, 0, 'damage_particle', {
-      speed: { min: 15, max: 40 },
-      scale: { start: 0.4, end: 0 },
-      lifespan: 300,
-      alpha: { start: 0.6, end: 0 },
-      tint: [0xff0000, 0xff4444],
-      emitting: false,
-      quantity: 3 // Fewer particles
-    });
+    // Set all particle emitters to null to prevent errors
+    this.thrusterParticles = null;
+    this.afterburnerParticles = null;
+    this.damageParticles = null;
   }
 
   update(keys?: any, pointer?: Phaser.Input.Pointer) {
@@ -367,8 +289,8 @@ export class Player {
     // Store last movement for particle effects
     this.lastMovement = { x: newVelX, y: newVelY };
 
-    // Enhanced particle effects
-    this.updateParticleEffects(isMoving);
+    // Particle effects disabled for performance
+    // this.updateParticleEffects(isMoving);
 
     // Smooth rotation towards mouse with banking effect
     if (pointer) {
@@ -391,7 +313,7 @@ export class Player {
       );
     }
 
-    // Update shield visual with enhanced effects
+    // Update shield visual (simplified for performance)
     this.updateAdvancedShieldVisual();
 
     // Update bullets with enhanced trail effects
@@ -417,120 +339,52 @@ export class Player {
     this.dashDuration = 200; // 200ms dash
     this.dashCooldown = 1000; // 1 second cooldown
 
-    // Visual effects
+    // Minimal visual effects - just alpha change
     this.sprite.setAlpha(0.6);
 
-    // Simplified dash effect - just a quick flash
-    const dashColor = this.avatarData?.color || 0x00ff88;
-    const dashEffect = this.scene.add.circle(this.sprite.x, this.sprite.y, 30, dashColor, 0.5);
-
-    // Quick fade out
-    this.scene.tweens.add({
-      targets: dashEffect,
-      alpha: 0,
-      scale: 2,
-      duration: 200,
-      onComplete: () => dashEffect.destroy()
-    });
-
-    // Minimal screen effect
-    this.scene.cameras.main.flash(50, 255, 255, 255);
+    // No additional visual effects to prevent lag
   }
 
   private updateParticleEffects(isMoving: boolean) {
-    // Simplified particle effects to prevent lag
-    const thrusterOffset = 15; // Reduced from 20
-    const angle = this.sprite.rotation - Math.PI / 2;
-
-    if (this.thrusterParticles) {
-      const thrusterX = this.sprite.x - Math.cos(angle) * thrusterOffset;
-      const thrusterY = this.sprite.y - Math.sin(angle) * thrusterOffset;
-
-      this.thrusterParticles.setPosition(thrusterX, thrusterY);
-      this.thrusterParticles.emitting = isMoving;
-
-      // Only update angle occasionally to save performance
-      if (isMoving && this.scene.time.now % 100 < 16) {
-        const particleAngle = (this.sprite.rotation + Math.PI) * (180 / Math.PI);
-        this.thrusterParticles.setConfig({
-          angle: { min: particleAngle - 15, max: particleAngle + 15 }
-        });
-      }
-    }
-
-    if (this.afterburnerParticles) {
-      const afterburnerX = this.sprite.x - Math.cos(angle) * (thrusterOffset + 5);
-      const afterburnerY = this.sprite.y - Math.sin(angle) * (thrusterOffset + 5);
-
-      this.afterburnerParticles.setPosition(afterburnerX, afterburnerY);
-      this.afterburnerParticles.emitting = this.speedBoostActive && isMoving;
-
-      if (this.speedBoostActive && isMoving && this.scene.time.now % 100 < 16) {
-        const particleAngle = (this.sprite.rotation + Math.PI) * (180 / Math.PI);
-        this.afterburnerParticles.setConfig({
-          angle: { min: particleAngle - 20, max: particleAngle + 20 }
-        });
-      }
-    }
+    // Completely disable particle effects to prevent lag
+    // All particle effects are disabled for maximum performance
+    return;
   }
 
   private updateAdvancedShieldVisual() {
     if (this.shield > 0) {
       if (!this.shieldSprite) {
-        this.shieldSprite = this.scene.add.circle(this.sprite.x, this.sprite.y, 30, 0x00aaff, 0.2);
-        this.shieldSprite.setStrokeStyle(3, 0x00aaff, 0.9);
+        this.shieldSprite = this.scene.add.circle(this.sprite.x, this.sprite.y, 25, 0x00aaff, 0.3);
       }
 
+      // Simple shield update - no animations to prevent lag
       this.shieldSprite.setPosition(this.sprite.x, this.sprite.y);
 
-      // Enhanced pulse effect with shield strength indication
-      const shieldStrength = this.shield / 100; // Assuming max shield is 100
-      const pulseScale = 1 + Math.sin(this.scene.time.now * 0.008) * (0.1 + shieldStrength * 0.1);
-      const pulseAlpha = 0.2 + Math.sin(this.scene.time.now * 0.006) * 0.1;
-
-      this.shieldSprite.setScale(pulseScale);
-      this.shieldSprite.setAlpha(pulseAlpha);
-
-      // Change color based on shield strength
-      const shieldColor = shieldStrength > 0.7 ? 0x00aaff :
-        shieldStrength > 0.3 ? 0xffaa00 : 0xff4444;
-      this.shieldSprite.setStrokeStyle(3, shieldColor, 0.9);
-
     } else if (this.shieldSprite) {
-      // Shield breaking effect
-      this.scene.tweens.add({
-        targets: this.shieldSprite,
-        alpha: 0,
-        scale: 2,
-        duration: 300,
-        onComplete: () => {
-          if (this.shieldSprite) {
-            this.shieldSprite.destroy();
-            this.shieldSprite = null;
-          }
-        }
-      });
+      // Simple shield removal - no animations
+      this.shieldSprite.destroy();
+      this.shieldSprite = null;
     }
   }
 
   private updateBullets() {
-    // Optimized bullet update - only check active bullets
-    const activeBullets = this.bullets.getChildren().filter(bullet => bullet.active);
+    // Ultra-optimized bullet update - minimal processing
+    const bullets = this.bullets.children.entries;
 
-    activeBullets.forEach((bullet) => {
-      const bulletSprite = bullet as Phaser.Physics.Arcade.Sprite;
+    for (let i = 0; i < bullets.length; i++) {
+      const bullet = bullets[i] as Phaser.Physics.Arcade.Sprite;
 
-      // Remove bullets that go off screen
-      const margin = 50;
-      if (bulletSprite.x < -margin || bulletSprite.x > 800 + margin ||
-        bulletSprite.y < -margin || bulletSprite.y > 600 + margin) {
-        bulletSprite.setActive(false);
-        bulletSprite.setVisible(false);
+      if (!bullet.active) continue;
+
+      // Remove bullets that go off screen (simplified check)
+      if (bullet.x < -100 || bullet.x > 900 || bullet.y < -100 || bullet.y > 700) {
+        bullet.setActive(false);
+        bullet.setVisible(false);
       }
 
-      // Reduced rotation for better performance
-      bulletSprite.rotation += 0.05;
-    });
+      // Remove bullet rotation to save performance
+      // bulletSprite.rotation += 0.05;
+    }
   }
 
   updateAI(target: Player) {
@@ -599,10 +453,8 @@ export class Player {
         Math.sin(angle) * bulletSpeed
       );
 
-      // Only add trail effect occasionally to prevent lag
-      if (this.isPlayer && Math.random() < 0.3) {
-        this.createAdvancedBulletTrail(bullet);
-      }
+      // Disable all visual effects during shooting to prevent lag
+      // Visual effects are causing performance issues
 
       // Add combo for rapid shooting (simplified)
       if (this.isPlayer) {
@@ -613,27 +465,13 @@ export class Player {
 
     this.lastShot = this.scene.time.now;
 
-    // Only create muzzle flash occasionally to prevent lag
-    if (Math.random() < 0.5) {
-      this.createMuzzleFlash();
-    }
+    // Disable muzzle flash completely to prevent lag
   }
 
   private createAdvancedBulletTrail(bullet: Phaser.Physics.Arcade.Sprite) {
-    // Simplified bullet trail to prevent performance issues
-    const trail = this.scene.add.graphics();
-    const trailColor = this.avatarData?.color || 0x00ff88;
-
-    // Create a simple trail that doesn't update every frame
-    trail.lineStyle(2, trailColor, 0.6);
-    trail.lineBetween(bullet.x, bullet.y, bullet.x - 10, bullet.y - 10);
-
-    // Remove trail after a short time
-    this.scene.time.delayedCall(200, () => {
-      if (trail && trail.active) {
-        trail.destroy();
-      }
-    });
+    // Completely disable bullet trails to prevent lag
+    // Trails are causing performance issues
+    return;
   }
 
   private addCombo() {
@@ -663,24 +501,9 @@ export class Player {
   }
 
   private createMuzzleFlash() {
-    // Simplified muzzle flash to prevent performance issues
-    const flashColor = this.avatarData?.color || 0x00ff88;
-
-    // Create a simple circle flash
-    const angle = this.sprite.rotation - Math.PI / 2;
-    const barrelLength = 15; // Reduced from 25
-    const flashX = this.sprite.x + Math.cos(angle) * barrelLength;
-    const flashY = this.sprite.y + Math.sin(angle) * barrelLength;
-
-    const muzzleFlash = this.scene.add.circle(flashX, flashY, 6, flashColor, 0.8);
-
-    // Quick fade out
-    this.scene.tweens.add({
-      targets: muzzleFlash,
-      alpha: 0,
-      duration: 80,
-      onComplete: () => muzzleFlash.destroy()
-    });
+    // Completely disable muzzle flash to prevent lag
+    // Muzzle flash effects are causing performance issues
+    return;
   }
 
   private updateShieldVisual() {
@@ -799,11 +622,11 @@ export class Player {
         this.scene.cameras.main.flash(100, 255, 255, 255);
       }
 
-      // Damage particles
-      if (this.damageParticles) {
-        this.damageParticles.setPosition(this.sprite.x, this.sprite.y);
-        this.damageParticles.explode(8);
-      }
+      // Damage particles disabled for performance
+      // if (this.damageParticles) {
+      //   this.damageParticles.setPosition(this.sprite.x, this.sprite.y);
+      //   this.damageParticles.explode(8);
+      // }
 
       // Reset combo on taking damage
       if (this.isPlayer) {

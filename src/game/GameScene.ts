@@ -484,19 +484,8 @@ export class GameScene extends Phaser.Scene {
     public addScore(points: number) {
         this.score += points;
 
-        // Create floating score text
-        const scoreText = this.add.text(this.player.sprite.x, this.player.sprite.y - 30, `+${points}`, {
-            fontSize: '16px',
-            color: '#00ff88'
-        }).setOrigin(0.5);
-
-        this.tweens.add({
-            targets: scoreText,
-            y: scoreText.y - 40,
-            alpha: 0,
-            duration: 1000,
-            onComplete: () => scoreText.destroy()
-        });
+        // Disable floating score text to prevent lag
+        // Floating text animations cause performance issues during combat
     }
 
     private setupCollisions() {
@@ -507,16 +496,25 @@ export class GameScene extends Phaser.Scene {
     }
 
     private setupEnemyCollisions(enemy: Enemy) {
-        // Player bullets hit enemy
+        // Player bullets hit enemy - optimized collision
         this.physics.add.overlap(this.player.getBullets(), enemy.sprite, (bullet, enemySprite) => {
             const bulletSprite = bullet as Phaser.Physics.Arcade.Sprite;
-            bulletSprite.setActive(false).setVisible(false);
+            
+            // Prevent multiple collisions from same bullet
+            if (!bulletSprite.active) return;
+            
+            bulletSprite.setActive(false);
+            bulletSprite.setVisible(false);
 
             const destroyed = enemy.takeDamage(25);
             this.addScore(50);
 
             if (destroyed) {
-                this.enemies = this.enemies.filter(e => e !== enemy);
+                // Optimized enemy removal
+                const index = this.enemies.indexOf(enemy);
+                if (index > -1) {
+                    this.enemies.splice(index, 1);
+                }
                 this.addScore(enemy.scoreValue);
             }
         });
