@@ -55,10 +55,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // Check if avatar is selected - wajib pilih avatar dulu
+        // Check if avatar is selected - must select avatar first
         const selectedAvatar = this.registry.get('selectedAvatar');
         if (!selectedAvatar) {
-            // Jika belum pilih avatar, kembali ke avatar selection
+            // If no avatar selected, return to avatar selection
             this.scene.start('AvatarSelectScene');
             return;
         }

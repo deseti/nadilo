@@ -63,14 +63,14 @@ export class AvatarSelectScene extends Phaser.Scene {
     this.createStarfield();
 
     // Title
-    this.add.text(width / 2, 60, 'PILIH AVATAR ANDA', {
+    this.add.text(width / 2, 60, 'SELECT YOUR AVATAR', {
       fontSize: '36px',
       color: '#00ff88',
       fontFamily: 'Arial, sans-serif'
     }).setOrigin(0.5);
     
     // Subtitle
-    this.add.text(width / 2, 100, 'Wajib memilih salah satu dari 3 avatar untuk bermain', {
+    this.add.text(width / 2, 100, 'You must choose one of 3 avatars to play', {
       fontSize: '16px',
       color: '#ffff44',
       fontFamily: 'Arial, sans-serif'
@@ -83,13 +83,13 @@ export class AvatarSelectScene extends Phaser.Scene {
     this.createInfoPanel();
 
     // Navigation instructions
-    this.add.text(width / 2, height - 80, 'Gunakan A/D atau Arrow Keys untuk memilih | SPACE untuk konfirmasi', {
+    this.add.text(width / 2, height - 80, 'Use A/D or Arrow Keys to select | SPACE to confirm', {
       fontSize: '16px',
       color: '#cccccc',
       fontFamily: 'Arial, sans-serif'
     }).setOrigin(0.5);
     
-    this.add.text(width / 2, height - 60, 'ESC untuk kembali ke menu utama', {
+    this.add.text(width / 2, height - 60, 'ESC to return to main menu', {
       fontSize: '14px',
       color: '#aaaaaa',
       fontFamily: 'Arial, sans-serif'
@@ -159,7 +159,7 @@ export class AvatarSelectScene extends Phaser.Scene {
         const glow = this.add.circle(sprite.x, sprite.y, 60, 0x00ff88, 0.3);
         this.time.delayedCall(100, () => glow.destroy());
       } else {
-        sprite.setScale(0.4); // Avatar tidak terpilih tetap kecil
+        sprite.setScale(0.4); // Unselected avatars remain small
         sprite.setTint(0x888888);
       }
     });
@@ -203,7 +203,7 @@ export class AvatarSelectScene extends Phaser.Scene {
       .on('pointerdown', () => this.selectAvatar());
     this.infoPanel.add(confirmButton);
     
-    const confirmText = this.add.text(0, 45, 'MULAI GAME!', {
+    const confirmText = this.add.text(0, 45, 'START GAME!', {
       fontSize: '16px',
       color: '#000000',
       fontFamily: 'Arial, sans-serif'
@@ -250,7 +250,7 @@ export class AvatarSelectScene extends Phaser.Scene {
     
     // Show confirmation message
     const confirmText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2 + 150, 
-      `${selectedAvatar.name} dipilih! Memulai game...`, {
+      `${selectedAvatar.name} selected! Starting game...`, {
       fontSize: '18px',
       color: '#00ff88',
       fontFamily: 'Arial, sans-serif'

@@ -5,7 +5,7 @@ import MONAD_LEADERBOARD_ABI from './monadLeaderboardABI';
 // Alamat smart contract Monad Games ID Leaderboard
 export const MONAD_LEADERBOARD_CONTRACT_ADDRESS = '0xceCBFF203C8B6044F52CE23D914A1bfD997541A4';
 
-// Chain config Monad Testnet (harus sama dengan di main.tsx)
+// Chain config Monad Testnet (must match with main.tsx)
 const monadTestnet = {
   id: 10143,
   name: 'Monad Testnet',
@@ -21,13 +21,13 @@ const monadTestnet = {
   },
 };
 
-// Public client untuk membaca data dari contract (tidak perlu wallet)
+// Public client for reading data from contract (no wallet required)
 export const publicClient = createPublicClient({
   chain: monadTestnet,
   transport: http(),
 });
 
-// Fungsi untuk membuat wallet client dari window.ethereum (MetaMask/wallet provider)
+// Function to create wallet client from window.ethereum (MetaMask/wallet provider)
 export function createWalletClientFromProvider() {
   if (typeof window !== 'undefined' && window.ethereum) {
     return createWalletClient({
@@ -38,7 +38,7 @@ export function createWalletClientFromProvider() {
   throw new Error('No wallet provider found');
 }
 
-// Fungsi untuk membaca data player dari smart contract
+// Function to read player data from smart contract
 export async function getPlayerData(gameAddress: string, playerAddress: string) {
   try {
     const result = await publicClient.readContract({
@@ -58,7 +58,7 @@ export async function getPlayerData(gameAddress: string, playerAddress: string) 
   }
 }
 
-// Fungsi untuk membaca total skor player
+// Function to read total player score
 export async function getTotalPlayerScore(playerAddress: string) {
   try {
     const result = await publicClient.readContract({
@@ -75,7 +75,7 @@ export async function getTotalPlayerScore(playerAddress: string) {
   }
 }
 
-// Fungsi untuk update data player (submit skor ke blockchain)
+// Function to update player data (submit score to blockchain)
 export async function updatePlayerData(
   playerAddress: string, 
   scoreAmount: number, 
@@ -142,7 +142,7 @@ export async function updatePlayerData(
   }
 }
 
-// Fungsi untuk update data player menggunakan Privy embedded wallet
+// Function to update player data using Privy embedded wallet
 export async function updatePlayerDataWithPrivy(
   playerAddress: string, 
   scoreAmount: number, 

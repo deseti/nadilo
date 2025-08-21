@@ -43,7 +43,7 @@ export class MenuScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    // Start Game button - wajib pilih avatar dulu
+    // Start Game button - must select avatar first
     const startButton = this.add.rectangle(width / 2, height / 2 + 20, 250, 60, 0x00ff88)
       .setInteractive()
       .on('pointerdown', () => {

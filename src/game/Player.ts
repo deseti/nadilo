@@ -59,7 +59,7 @@ export class Player {
       // Try to use selected avatar image first
       if (scene.textures.exists(this.avatarData.id)) {
         this.sprite = scene.physics.add.sprite(x, y, this.avatarData.id);
-        this.sprite.setScale(0.3); // Diperkecil agar lebih nyaman dimainkan
+        this.sprite.setScale(0.3); // Scaled down for better gameplay experience
       } else {
         // Fallback to created texture
         this.sprite = scene.physics.add.sprite(x, y, '');

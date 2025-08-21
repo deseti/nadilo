@@ -69,7 +69,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         accentColor: '#676FFF',
       },
       
-      // Configure login methods - INI YANG PALING PENTING untuk Monad Games ID integration
+      // Configure login methods - THIS IS MOST IMPORTANT for Monad Games ID integration
       loginMethodsAndOrder: {
         // Don't forget to enable Monad Games ID support in:
         // Global Wallet > Integrations > Monad Games ID (click on the slide to enable)
