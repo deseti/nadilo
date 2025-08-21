@@ -63,9 +63,16 @@ export class AvatarSelectScene extends Phaser.Scene {
     this.createStarfield();
 
     // Title
-    this.add.text(width / 2, 80, 'SELECT YOUR FIGHTER', {
+    this.add.text(width / 2, 60, 'PILIH AVATAR ANDA', {
       fontSize: '36px',
       color: '#00ff88',
+      fontFamily: 'Arial, sans-serif'
+    }).setOrigin(0.5);
+    
+    // Subtitle
+    this.add.text(width / 2, 100, 'Wajib memilih salah satu dari 3 avatar untuk bermain', {
+      fontSize: '16px',
+      color: '#ffff44',
       fontFamily: 'Arial, sans-serif'
     }).setOrigin(0.5);
 
@@ -76,9 +83,15 @@ export class AvatarSelectScene extends Phaser.Scene {
     this.createInfoPanel();
 
     // Navigation instructions
-    this.add.text(width / 2, height - 60, 'Use A/D or Arrow Keys to select | SPACE to confirm', {
+    this.add.text(width / 2, height - 80, 'Gunakan A/D atau Arrow Keys untuk memilih | SPACE untuk konfirmasi', {
       fontSize: '16px',
       color: '#cccccc',
+      fontFamily: 'Arial, sans-serif'
+    }).setOrigin(0.5);
+    
+    this.add.text(width / 2, height - 60, 'ESC untuk kembali ke menu utama', {
+      fontSize: '14px',
+      color: '#aaaaaa',
       fontFamily: 'Arial, sans-serif'
     }).setOrigin(0.5);
 
@@ -109,10 +122,17 @@ export class AvatarSelectScene extends Phaser.Scene {
     const centerY = height / 2 - 50;
 
     this.avatars.forEach((avatar, index) => {
-      const x = width / 2 + (index - 1) * 180; // Adjusted spacing for 3 avatars
+      const x = width / 2 + (index - 1) * 200; // Spacing untuk 3 avatar
       const sprite = this.add.sprite(x, centerY, avatar.id);
-      sprite.setScale(0.8); // Adjust scale for avatar images
+      sprite.setScale(0.4); // Diperkecil untuk preview yang lebih baik
       this.avatarSprites.push(sprite);
+      
+      // Tambahkan nama avatar di bawah sprite
+      this.add.text(x, centerY + 60, avatar.name, {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif'
+      }).setOrigin(0.5);
     });
   }
 
@@ -133,13 +153,13 @@ export class AvatarSelectScene extends Phaser.Scene {
     // Update avatar highlights
     this.avatarSprites.forEach((sprite, index) => {
       if (index === this.selectedIndex) {
-        sprite.setScale(1.0); // Highlight selected avatar
+        sprite.setScale(0.5); // Highlight selected avatar (sedikit lebih besar)
         sprite.setTint(0xffffff);
         // Add glow effect
-        const glow = this.add.circle(sprite.x, sprite.y, 80, 0x00ff88, 0.3);
+        const glow = this.add.circle(sprite.x, sprite.y, 60, 0x00ff88, 0.3);
         this.time.delayedCall(100, () => glow.destroy());
       } else {
-        sprite.setScale(0.8);
+        sprite.setScale(0.4); // Avatar tidak terpilih tetap kecil
         sprite.setTint(0x888888);
       }
     });
@@ -183,7 +203,7 @@ export class AvatarSelectScene extends Phaser.Scene {
       .on('pointerdown', () => this.selectAvatar());
     this.infoPanel.add(confirmButton);
     
-    const confirmText = this.add.text(0, 45, 'LAUNCH!', {
+    const confirmText = this.add.text(0, 45, 'MULAI GAME!', {
       fontSize: '16px',
       color: '#000000',
       fontFamily: 'Arial, sans-serif'
@@ -226,10 +246,18 @@ export class AvatarSelectScene extends Phaser.Scene {
     
     // Add selection effect
     const selectedSprite = this.avatarSprites[this.selectedIndex];
-    this.add.circle(selectedSprite.x, selectedSprite.y, 50, 0x00ff88, 0.5);
+    this.add.circle(selectedSprite.x, selectedSprite.y, 40, 0x00ff88, 0.5);
+    
+    // Show confirmation message
+    const confirmText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2 + 150, 
+      `${selectedAvatar.name} dipilih! Memulai game...`, {
+      fontSize: '18px',
+      color: '#00ff88',
+      fontFamily: 'Arial, sans-serif'
+    }).setOrigin(0.5);
     
     // Transition to game
-    this.time.delayedCall(500, () => {
+    this.time.delayedCall(1000, () => {
       this.scene.start('GameScene');
     });
   }

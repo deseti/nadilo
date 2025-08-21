@@ -43,55 +43,24 @@ export class MenuScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    // Select Fighter button
-    const selectButton = this.add.rectangle(width / 2, height / 2 + 20, 250, 60, 0x00ff88)
+    // Start Game button - wajib pilih avatar dulu
+    const startButton = this.add.rectangle(width / 2, height / 2 + 20, 250, 60, 0x00ff88)
       .setInteractive()
       .on('pointerdown', () => {
         this.scene.start('AvatarSelectScene');
       })
       .on('pointerover', () => {
-        selectButton.setFillStyle(0x00cc66);
-        selectButton.setScale(1.05);
+        startButton.setFillStyle(0x00cc66);
+        startButton.setScale(1.05);
       })
       .on('pointerout', () => {
-        selectButton.setFillStyle(0x00ff88);
-        selectButton.setScale(1);
+        startButton.setFillStyle(0x00ff88);
+        startButton.setScale(1);
       });
 
-    this.add.text(width / 2, height / 2 + 20, 'SELECT FIGHTER', {
+    this.add.text(width / 2, height / 2 + 20, 'START GAME', {
       fontSize: '20px',
       color: '#000000',
-      fontFamily: 'Arial, sans-serif'
-    }).setOrigin(0.5);
-
-    // Quick Battle button (uses default fighter)
-    const quickButton = this.add.rectangle(width / 2, height / 2 + 100, 200, 50, 0x4444ff)
-      .setInteractive()
-      .on('pointerdown', () => {
-        // Set default avatar
-        this.registry.set('selectedAvatar', {
-          id: 'fighter_1',
-          name: 'Lightning Fighter',
-          color: 0x00ff88,
-          speed: 250,
-          health: 100,
-          fireRate: 250,
-          special: 'Rapid Fire'
-        });
-        this.scene.start('GameScene');
-      })
-      .on('pointerover', () => {
-        quickButton.setFillStyle(0x6666ff);
-        quickButton.setScale(1.05);
-      })
-      .on('pointerout', () => {
-        quickButton.setFillStyle(0x4444ff);
-        quickButton.setScale(1);
-      });
-
-    this.add.text(width / 2, height / 2 + 100, 'QUICK BATTLE', {
-      fontSize: '18px',
-      color: '#ffffff',
       fontFamily: 'Arial, sans-serif'
     }).setOrigin(0.5);
 
