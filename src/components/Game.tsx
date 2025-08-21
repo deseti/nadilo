@@ -58,8 +58,9 @@ export const Game: React.FC<GameProps> = ({ playerID, onScoreUpdate }) => {
       <div className="game-ui">
         <div className="game-info">
           <h3>Galactic Fighter Arena</h3>
-          <p>Choose your fighter and survive the waves!</p>
+          <p>Choose your fighter and survive for 60 seconds!</p>
           <ul>
+            <li>⏱️ Survive for 60 seconds to win</li>
             <li>WASD: Move your fighter</li>
             <li>Mouse: Aim and fire</li>
             <li>ESC: Pause game</li>

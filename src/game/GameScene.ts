@@ -17,16 +17,22 @@ export class GameScene extends Phaser.Scene {
     private healthText!: Phaser.GameObjects.Text;
     private waveText!: Phaser.GameObjects.Text;
     private powerUpText!: Phaser.GameObjects.Text;
+    private timerText!: Phaser.GameObjects.Text;
 
     // Game state
     private startTime: number = 0;
     private isGameOver: boolean = false;
     private isPaused: boolean = false;
 
+    // Timer system
+    private gameTimeLimit: number = 60; // 60 seconds
+    private remainingTime: number = 60;
+    private gameTimer!: Phaser.Time.TimerEvent;
+
     // Wave system
     private waveStartDelay: number = 3000;
     private enemySpawnTimer!: Phaser.Time.TimerEvent;
-    
+
     // Background elements
     private stars: Phaser.GameObjects.Graphics[] = [];
     private starSpeed: number = 1;
@@ -57,9 +63,13 @@ export class GameScene extends Phaser.Scene {
         this.isPaused = false;
         this.enemies = [];
         this.powerUps = [];
+        this.remainingTime = this.gameTimeLimit;
 
         // Record the start time of the game session
         this.startTime = this.time.now;
+
+        // Start the game timer
+        this.startGameTimer();
 
         const { width, height } = this.cameras.main;
 
@@ -102,6 +112,11 @@ export class GameScene extends Phaser.Scene {
             color: '#4444ff'
         });
 
+        this.timerText = this.add.text(16, 118, 'Time: 60s', {
+            fontSize: '24px',
+            color: '#ffaa00'
+        });
+
         this.powerUpText = this.add.text(width / 2, 50, '', {
             fontSize: '20px',
             color: '#ffff44'
@@ -133,7 +148,7 @@ export class GameScene extends Phaser.Scene {
             const y = Phaser.Math.Between(0, height);
             const size = Phaser.Math.Between(1, 3);
             const alpha = Phaser.Math.FloatBetween(0.3, 1);
-            
+
             const star = this.add.graphics();
             star.fillStyle(0xffffff, alpha);
             star.fillCircle(x, y, size);
@@ -188,7 +203,12 @@ export class GameScene extends Phaser.Scene {
 
         // Check game over condition
         if (this.player.health <= 0) {
-            this.gameOver();
+            this.gameOver('health');
+        }
+
+        // Check if time is up
+        if (this.remainingTime <= 0 && !this.isGameOver) {
+            this.gameOver('time');
         }
     }
 
@@ -206,12 +226,26 @@ export class GameScene extends Phaser.Scene {
         this.scoreText.setText(`Score: ${this.score}`);
         this.healthText.setText(`Health: ${this.player.health}${this.player.shield > 0 ? ` (+${this.player.shield})` : ''}`);
         this.waveText.setText(`Wave: ${this.wave}`);
+
+        // Update timer display with color coding
+        if (this.remainingTime > 20) {
+            this.timerText.setColor('#ffaa00');
+        } else if (this.remainingTime > 10) {
+            this.timerText.setColor('#ff6600');
+        } else {
+            this.timerText.setColor('#ff0000');
+        }
+        this.timerText.setText(`Time: ${this.remainingTime}s`);
     }
 
     private togglePause() {
         this.isPaused = !this.isPaused;
         if (this.isPaused) {
             this.physics.pause();
+            // Pause the game timer
+            if (this.gameTimer) {
+                this.gameTimer.paused = true;
+            }
             this.add.text(400, 300, 'PAUSED\nPress ESC to continue', {
                 fontSize: '32px',
                 color: '#ffffff',
@@ -219,18 +253,22 @@ export class GameScene extends Phaser.Scene {
             }).setOrigin(0.5).setDepth(100);
         } else {
             this.physics.resume();
+            // Resume the game timer
+            if (this.gameTimer) {
+                this.gameTimer.paused = false;
+            }
             // Remove pause text (you might want to keep a reference to it)
         }
     }
 
     private startWave() {
         this.waveText.setText(`WAVE ${this.wave} STARTING...`);
-        
+
         // Calculate wave difficulty
         const baseEnemies = 3;
         const additionalEnemies = Math.floor(this.wave * 1.5);
         const totalEnemies = baseEnemies + additionalEnemies;
-        
+
         this.enemiesRemaining = totalEnemies;
 
         // Start spawning enemies after delay
@@ -246,7 +284,7 @@ export class GameScene extends Phaser.Scene {
 
     private spawnWaveEnemies() {
         const enemiesToSpawn = Math.min(5, this.enemiesRemaining);
-        
+
         for (let i = 0; i < enemiesToSpawn; i++) {
             this.time.delayedCall(i * 1000, () => {
                 this.spawnRandomEnemy();
@@ -264,11 +302,11 @@ export class GameScene extends Phaser.Scene {
 
     private spawnRandomEnemy() {
         const { width, height } = this.cameras.main;
-        
+
         // Choose random spawn position at edge of screen
         const side = Math.floor(Math.random() * 4);
         let x, y;
-        
+
         switch (side) {
             case 0: // Top
                 x = Phaser.Math.Between(50, width - 50);
@@ -295,7 +333,7 @@ export class GameScene extends Phaser.Scene {
         const enemyType = this.chooseEnemyType();
         const enemy = new Enemy(this, x, y, enemyType);
         this.enemies.push(enemy);
-        
+
         // Setup collisions for new enemy
         this.setupEnemyCollisions(enemy);
     }
@@ -303,7 +341,7 @@ export class GameScene extends Phaser.Scene {
     private chooseEnemyType() {
         const rand = Math.random();
         const waveMultiplier = Math.min(this.wave / 10, 1);
-        
+
         if (this.wave === 1) {
             return {
                 type: 'basic' as const,
@@ -317,7 +355,7 @@ export class GameScene extends Phaser.Scene {
                 behavior: 'aggressive' as const
             };
         }
-        
+
         if (rand < 0.4) {
             return {
                 type: 'basic' as const,
@@ -373,16 +411,16 @@ export class GameScene extends Phaser.Scene {
         const { width, height } = this.cameras.main;
         const x = Phaser.Math.Between(100, width - 100);
         const y = Phaser.Math.Between(100, height - 100);
-        
+
         const powerUp = new PowerUp(this, x, y);
         this.powerUps.push(powerUp);
-        
+
         // Setup collision with player
         this.physics.add.overlap(this.player.sprite, powerUp.sprite, () => {
             const message = powerUp.collect(this.player);
             if (message) {
                 this.showPowerUpMessage(message);
-                
+
                 // Handle special power-ups
                 if (message.includes('NUCLEAR')) {
                     PowerUp.handleNukeEffect(this, this.enemies, this.player);
@@ -402,14 +440,14 @@ export class GameScene extends Phaser.Scene {
     private completeWave() {
         this.wave++;
         this.addScore(500 * this.wave); // Wave completion bonus
-        
+
         // Show wave complete message
         const { width, height } = this.cameras.main;
         const waveCompleteText = this.add.text(width / 2, height / 2, `WAVE ${this.wave - 1} COMPLETE!`, {
             fontSize: '32px',
             color: '#00ff88'
         }).setOrigin(0.5);
-        
+
         this.time.delayedCall(2000, () => {
             waveCompleteText.destroy();
             this.startWave();
@@ -420,24 +458,24 @@ export class GameScene extends Phaser.Scene {
         const { width, height } = this.cameras.main;
         const wallThickness = 20;
         const wallColor = 0x333333;
-        
+
         // Create arena walls with glow effect
         const topWall = this.add.rectangle(width / 2, wallThickness / 2, width, wallThickness, wallColor);
         const bottomWall = this.add.rectangle(width / 2, height - wallThickness / 2, width, wallThickness, wallColor);
         const leftWall = this.add.rectangle(wallThickness / 2, height / 2, wallThickness, height, wallColor);
         const rightWall = this.add.rectangle(width - wallThickness / 2, height / 2, wallThickness, height, wallColor);
-        
+
         // Add glow effect to walls
         [topWall, bottomWall, leftWall, rightWall].forEach(wall => {
             wall.setStrokeStyle(2, 0x00ff88, 0.8);
         });
-        
+
         this.physics.world.setBounds(wallThickness, wallThickness, width - wallThickness * 2, height - wallThickness * 2);
     }
 
     public addScore(points: number) {
         this.score += points;
-        
+
         // Create floating score text
         const scoreText = this.add.text(this.player.sprite.x, this.player.sprite.y - 30, `+${points}`, {
             fontSize: '16px',
@@ -465,10 +503,10 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.player.getBullets(), enemy.sprite, (bullet, enemySprite) => {
             const bulletSprite = bullet as Phaser.Physics.Arcade.Sprite;
             bulletSprite.setActive(false).setVisible(false);
-            
+
             const destroyed = enemy.takeDamage(25);
             this.addScore(50);
-            
+
             if (destroyed) {
                 this.enemies = this.enemies.filter(e => e !== enemy);
                 this.addScore(enemy.scoreValue);
@@ -489,19 +527,70 @@ export class GameScene extends Phaser.Scene {
         });
     }
 
-    // *** MODIFIED ***: gameOver function now handles score submission
-    private gameOver() {
+    private startGameTimer() {
+        // Create a timer that counts down every second
+        this.gameTimer = this.time.addEvent({
+            delay: 1000, // 1 second
+            callback: () => {
+                this.remainingTime--;
+
+                // Add warning effects when time is running low
+                if (this.remainingTime <= 10 && this.remainingTime > 0) {
+                    // Flash the timer text
+                    this.tweens.add({
+                        targets: this.timerText,
+                        scaleX: 1.2,
+                        scaleY: 1.2,
+                        duration: 100,
+                        yoyo: true,
+                        ease: 'Power2'
+                    });
+
+                    // Play warning sound effect (if you have audio)
+                    // this.sound.play('warning');
+                }
+
+                if (this.remainingTime <= 0) {
+                    this.gameTimer.destroy();
+                }
+            },
+            repeat: this.gameTimeLimit - 1 // Repeat for the duration of the game
+        });
+    }
+
+    // *** MODIFIED ***: gameOver function now handles score submission and different end conditions
+    private gameOver(reason: 'health' | 'time' = 'health') {
         // Set flag to prevent this function from running multiple times
         if (this.isGameOver) return;
         this.isGameOver = true;
         this.physics.pause();
 
-        // --- UI for Game Over screen ---
-        this.add.rectangle(400, 300, 400, 200, 0x000000, 0.8).setDepth(1);
-        this.add.text(400, 250, 'GAME OVER', { fontSize: '32px', color: '#ff4444' }).setOrigin(0.5).setDepth(1);
-        this.add.text(400, 300, `Final Score: ${this.score}`, { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5).setDepth(1);
+        // Stop the timer if it's still running
+        if (this.gameTimer) {
+            this.gameTimer.destroy();
+        }
 
-        const statusText = this.add.text(400, 350, 'Submitting score...', { fontSize: '18px', color: '#cccccc' }).setOrigin(0.5).setDepth(1);
+        // --- UI for Game Over screen ---
+        this.add.rectangle(400, 300, 400, 250, 0x000000, 0.8).setDepth(1);
+
+        // Different messages based on how the game ended
+        const gameOverTitle = reason === 'time' ? 'TIME\'S UP!' : 'GAME OVER';
+        const titleColor = reason === 'time' ? '#ffaa00' : '#ff4444';
+
+        this.add.text(400, 230, gameOverTitle, { fontSize: '32px', color: titleColor }).setOrigin(0.5).setDepth(1);
+
+        if (reason === 'time') {
+            this.add.text(400, 270, 'You survived the full 60 seconds!', { fontSize: '18px', color: '#00ff88' }).setOrigin(0.5).setDepth(1);
+            // Bonus points for surviving the full time
+            this.addScore(1000);
+        } else {
+            this.add.text(400, 270, 'Your fighter was destroyed!', { fontSize: '18px', color: '#ff6666' }).setOrigin(0.5).setDepth(1);
+        }
+
+        this.add.text(400, 300, `Final Score: ${this.score}`, { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5).setDepth(1);
+        this.add.text(400, 325, `Waves Completed: ${this.wave - 1}`, { fontSize: '18px', color: '#cccccc' }).setOrigin(0.5).setDepth(1);
+
+        const statusText = this.add.text(400, 360, 'Submitting score...', { fontSize: '18px', color: '#cccccc' }).setOrigin(0.5).setDepth(1);
 
         // --- Score Submission Logic ---
         // Retrieve the playerID and score callback from the game's registry
@@ -526,9 +615,9 @@ export class GameScene extends Phaser.Scene {
                 })
                 .finally(() => {
                     // Add a button to go back to the menu after submission attempt
-                    const backButton = this.add.rectangle(400, 420, 150, 40, 0x00ff88).setInteractive().setDepth(1);
+                    const backButton = this.add.rectangle(400, 450, 150, 40, 0x00ff88).setInteractive().setDepth(1);
                     backButton.on('pointerdown', () => this.scene.start('MenuScene'));
-                    this.add.text(400, 420, 'MAIN MENU', { fontSize: '18px', color: '#000000' }).setOrigin(0.5).setDepth(1);
+                    this.add.text(400, 450, 'MAIN MENU', { fontSize: '18px', color: '#000000' }).setOrigin(0.5).setDepth(1);
                 });
 
             // Call React callback for blockchain submission
@@ -542,9 +631,9 @@ export class GameScene extends Phaser.Scene {
         } else {
             // Handle case where playerID is not found (e.g., for testing)
             statusText.setText('Could not find Player ID.').setColor('#ff4444');
-            const backButton = this.add.rectangle(400, 420, 150, 40, 0x00ff88).setInteractive().setDepth(1);
+            const backButton = this.add.rectangle(400, 450, 150, 40, 0x00ff88).setInteractive().setDepth(1);
             backButton.on('pointerdown', () => this.scene.start('MenuScene'));
-            this.add.text(400, 420, 'MAIN MENU', { fontSize: '18px', color: '#000000' }).setOrigin(0.5).setDepth(1);
+            this.add.text(400, 450, 'MAIN MENU', { fontSize: '18px', color: '#000000' }).setOrigin(0.5).setDepth(1);
         }
     }
 }

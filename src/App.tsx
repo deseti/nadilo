@@ -1,6 +1,6 @@
 import { usePrivy, type CrossAppAccountWithMetadata } from '@privy-io/react-auth';
 import { Game } from './components/Game';
-import { Leaderboard } from './components/Leaderboard';
+
 import { AddressEditor } from './components/AddressEditor';
 import { AddressSync } from './components/AddressSync';
 import { MonadAddressVerification } from './components/MonadAddressVerification';
@@ -249,9 +249,7 @@ function App() {
                 onScoreUpdate={handleScoreUpdate}
               />
             </div>
-            <div className="leaderboard-section">
-              <Leaderboard playerID={playerID} />
-            </div>
+
           </div>
         ) : (
           <div className="login-container">
