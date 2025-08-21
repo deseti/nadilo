@@ -5,6 +5,8 @@ export class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
   public health: number = 100;
   public maxHealth: number = 100;
+  public lives: number = 3; // Add lives system
+  public maxLives: number = 3;
   public speed: number = 200;
   public baseSpeed: number = 200;
   public lastShot: number = 0;
@@ -28,6 +30,11 @@ export class Player {
   private thrusterParticles: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private afterburnerParticles: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private damageParticles: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
+  
+  // Health bar visual elements
+  private healthBarBg: Phaser.GameObjects.Rectangle | null = null;
+  private healthBarFill: Phaser.GameObjects.Rectangle | null = null;
+  private livesDisplay: Phaser.GameObjects.Text | null = null;
 
   // Enhanced features
   public combo: number = 0;
@@ -59,7 +66,7 @@ export class Player {
       // Try to use selected avatar image first
       if (scene.textures.exists(this.avatarData.id)) {
         this.sprite = scene.physics.add.sprite(x, y, this.avatarData.id);
-        this.sprite.setScale(0.3); // Scaled down for better gameplay experience
+        this.sprite.setScale(0.15); // Much smaller for better gameplay
       } else {
         // Fallback to created texture
         this.sprite = scene.physics.add.sprite(x, y, '');
@@ -95,76 +102,64 @@ export class Player {
 
     // Setup collisions
     this.setupCollisions();
+    
+    // Create health bar for player
+    if (this.isPlayer) {
+      this.createHealthBar();
+    }
   }
 
   private createAdvancedFighterTexture(color: number, type: string) {
     const graphics = this.scene.add.graphics();
 
     if (this.isPlayer && this.avatarData) {
-      // Create sophisticated fighter jet based on avatar
+      // Create smaller, simpler fighter jet for better performance
       const avatarName = this.avatarData.id.toLowerCase();
 
-      // Base fighter body
+      // Smaller base fighter body
       graphics.fillStyle(color);
       graphics.beginPath();
-      graphics.moveTo(0, -25); // nose (extended)
-      graphics.lineTo(-6, -15); // left nose wing
-      graphics.lineTo(-12, -8); // left main wing back
-      graphics.lineTo(-18, -2); // left wing tip
-      graphics.lineTo(-15, 8); // left wing front
-      graphics.lineTo(-8, 15); // left rear wing
-      graphics.lineTo(-4, 20); // left exhaust
-      graphics.lineTo(0, 18); // center back
-      graphics.lineTo(4, 20); // right exhaust
-      graphics.lineTo(8, 15); // right rear wing
-      graphics.lineTo(15, 8); // right wing front
-      graphics.lineTo(18, -2); // right wing tip
-      graphics.lineTo(12, -8); // right main wing back
-      graphics.lineTo(6, -15); // right nose wing
+      graphics.moveTo(0, -15); // nose (smaller)
+      graphics.lineTo(-4, -8); // left nose wing
+      graphics.lineTo(-8, -4); // left main wing back
+      graphics.lineTo(-10, 0); // left wing tip
+      graphics.lineTo(-8, 4); // left wing front
+      graphics.lineTo(-4, 8); // left rear wing
+      graphics.lineTo(-2, 12); // left exhaust
+      graphics.lineTo(0, 10); // center back
+      graphics.lineTo(2, 12); // right exhaust
+      graphics.lineTo(4, 8); // right rear wing
+      graphics.lineTo(8, 4); // right wing front
+      graphics.lineTo(10, 0); // right wing tip
+      graphics.lineTo(8, -4); // right main wing back
+      graphics.lineTo(4, -8); // right nose wing
       graphics.closePath();
       graphics.fillPath();
 
-      // Cockpit with gradient effect
+      // Smaller cockpit
       graphics.fillStyle(0x222222);
-      graphics.fillEllipse(0, -12, 8, 12);
+      graphics.fillEllipse(0, -6, 4, 6);
       graphics.fillStyle(0x444444);
-      graphics.fillEllipse(0, -12, 4, 8);
+      graphics.fillEllipse(0, -6, 2, 4);
 
-      // Engine intakes
+      // Smaller engine intakes
       graphics.fillStyle(0x111111);
-      graphics.fillCircle(-8, 0, 3);
-      graphics.fillCircle(8, 0, 3);
+      graphics.fillCircle(-4, 0, 1.5);
+      graphics.fillCircle(4, 0, 1.5);
 
-      // Weapon hardpoints
-      graphics.fillStyle(0x666666);
-      graphics.fillRect(-15, -5, 4, 2);
-      graphics.fillRect(11, -5, 4, 2);
-
-      // Avatar-specific customizations
+      // Simplified avatar-specific customizations
       graphics.fillStyle(0xffffff);
       if (avatarName.includes('moyaki')) {
-        // Lightning pattern
-        graphics.beginPath();
-        graphics.moveTo(-3, -20);
-        graphics.lineTo(0, -15);
-        graphics.lineTo(-2, -10);
-        graphics.lineTo(2, -8);
-        graphics.lineTo(0, -5);
-        graphics.lineTo(3, -3);
-        graphics.strokePath();
-        graphics.fillRect(-1, -22, 2, 8);
+        // Simple lightning mark
+        graphics.fillRect(-1, -12, 2, 4);
       } else if (avatarName.includes('molandak')) {
-        // Stealth design elements
+        // Simple stealth mark
         graphics.fillStyle(0x00ff88);
-        graphics.fillTriangle(0, -22, -4, -18, 4, -18);
-        graphics.fillRect(-6, 2, 12, 3);
+        graphics.fillTriangle(0, -12, -2, -8, 2, -8);
       } else if (avatarName.includes('chog')) {
-        // Heavy armor plates
+        // Simple armor mark
         graphics.fillStyle(0xffaa00);
-        graphics.fillRect(-10, -3, 20, 6);
-        graphics.fillRect(-6, 10, 12, 4);
-        graphics.fillCircle(-12, 0, 2);
-        graphics.fillCircle(12, 0, 2);
+        graphics.fillRect(-4, -2, 8, 2);
       }
 
       // Add glow effect
@@ -192,7 +187,7 @@ export class Player {
       graphics.fillRect(-6, 0, 12, 2);
     }
 
-    graphics.generateTexture(type + '_advanced_fighter', 50, 50);
+    graphics.generateTexture(type + '_advanced_fighter', 30, 30);
     graphics.destroy();
 
     this.sprite.setTexture(type + '_advanced_fighter');
@@ -315,6 +310,9 @@ export class Player {
 
     // Update shield visual (simplified for performance)
     this.updateAdvancedShieldVisual();
+
+    // Update health bar
+    this.updateHealthBar();
 
     // Update bullets with enhanced trail effects
     this.updateBullets();
@@ -589,11 +587,14 @@ export class Player {
     // Check invulnerability
     if (this.invulnerableActive) return;
 
+    // Reduce damage for better gameplay balance
+    let actualDamage = Math.max(1, Math.floor(damage * 0.3)); // Reduce damage to 30%
+
     // Check shield
     if (this.shield > 0) {
-      const shieldDamage = Math.min(this.shield, damage);
+      const shieldDamage = Math.min(this.shield, actualDamage);
       this.shield -= shieldDamage;
-      damage -= shieldDamage;
+      actualDamage -= shieldDamage;
 
       // Enhanced shield hit effect
       if (this.shieldSprite) {
@@ -606,8 +607,8 @@ export class Player {
     }
 
     // Apply remaining damage to health
-    if (damage > 0) {
-      this.health -= damage;
+    if (actualDamage > 0) {
+      this.health -= actualDamage;
       if (this.health < 0) this.health = 0;
 
       // Enhanced visual feedback
@@ -616,23 +617,127 @@ export class Player {
         this.sprite.clearTint();
       });
 
-      // Screen shake for player
+      // Screen shake for player (reduced intensity)
       if (this.isPlayer) {
-        this.scene.cameras.main.shake(300, 0.02);
-        this.scene.cameras.main.flash(100, 255, 255, 255);
+        this.scene.cameras.main.shake(200, 0.01);
       }
 
-      // Damage particles disabled for performance
-      // if (this.damageParticles) {
-      //   this.damageParticles.setPosition(this.sprite.x, this.sprite.y);
-      //   this.damageParticles.explode(8);
-      // }
+      // Check if health is depleted
+      if (this.health <= 0) {
+        this.loseLife();
+      }
 
       // Reset combo on taking damage
       if (this.isPlayer) {
         this.combo = 0;
         this.comboTimer = 0;
       }
+    }
+  }
+
+  private loseLife() {
+    if (this.lives > 0) {
+      this.lives--;
+      
+      // Restore health when losing a life
+      this.health = this.maxHealth;
+      
+      // Add temporary invulnerability
+      this.addInvulnerability(2000); // 2 seconds of invulnerability
+      
+      // Visual feedback for life lost
+      this.scene.cameras.main.flash(200, 255, 0, 0); // Red flash
+      
+      console.log(`Life lost! Lives remaining: ${this.lives}`);
+    }
+  }
+
+  public isDead(): boolean {
+    return this.lives <= 0 && this.health <= 0;
+  }
+
+  public destroy() {
+    // Clean up health bar elements
+    if (this.healthBarBg) {
+      this.healthBarBg.destroy();
+      this.healthBarBg = null;
+    }
+    if (this.healthBarFill) {
+      this.healthBarFill.destroy();
+      this.healthBarFill = null;
+    }
+    if (this.livesDisplay) {
+      this.livesDisplay.destroy();
+      this.livesDisplay = null;
+    }
+    
+    // Clean up shield
+    if (this.shieldSprite) {
+      this.shieldSprite.destroy();
+      this.shieldSprite = null;
+    }
+    
+    // Clean up power-up timers
+    this.powerUpTimers.forEach(timer => {
+      if (timer) timer.destroy();
+    });
+    this.powerUpTimers = [];
+  }
+
+  private createHealthBar() {
+    const barWidth = 60;
+    const barHeight = 8;
+    const barX = this.sprite.x;
+    const barY = this.sprite.y - 35;
+
+    // Health bar background
+    this.healthBarBg = this.scene.add.rectangle(barX, barY, barWidth, barHeight, 0x444444);
+    this.healthBarBg.setDepth(10);
+
+    // Health bar fill
+    this.healthBarFill = this.scene.add.rectangle(barX, barY, barWidth, barHeight, 0x00ff00);
+    this.healthBarFill.setDepth(11);
+
+    // Lives display
+    this.livesDisplay = this.scene.add.text(barX, barY - 15, `♥ ${this.lives}`, {
+      fontSize: '12px',
+      color: '#ff4444'
+    }).setOrigin(0.5).setDepth(12);
+  }
+
+  private updateHealthBar() {
+    if (!this.healthBarBg || !this.healthBarFill || !this.livesDisplay) return;
+
+    // Update position to follow player
+    const barX = this.sprite.x;
+    const barY = this.sprite.y - 35;
+
+    this.healthBarBg.setPosition(barX, barY);
+    this.healthBarFill.setPosition(barX, barY);
+    this.livesDisplay.setPosition(barX, barY - 15);
+
+    // Update health bar fill
+    const healthPercent = this.health / this.maxHealth;
+    const barWidth = 60;
+    this.healthBarFill.setSize(barWidth * healthPercent, 8);
+
+    // Change color based on health
+    if (healthPercent > 0.6) {
+      this.healthBarFill.setFillStyle(0x00ff00); // Green
+    } else if (healthPercent > 0.3) {
+      this.healthBarFill.setFillStyle(0xffaa00); // Orange
+    } else {
+      this.healthBarFill.setFillStyle(0xff0000); // Red
+    }
+
+    // Update lives display
+    this.livesDisplay.setText(`♥ ${this.lives}`);
+
+    // Hide health bar if player is dead
+    if (this.isDead()) {
+      this.healthBarBg.setVisible(false);
+      this.healthBarFill.setVisible(false);
+      this.livesDisplay.setVisible(false);
     }
   }
 

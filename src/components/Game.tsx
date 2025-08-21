@@ -61,8 +61,10 @@ export const Game: React.FC<GameProps> = ({ playerID, onScoreUpdate }) => {
           <p>Choose your fighter and survive for 60 seconds!</p>
           <ul>
             <li>⏱️ Survive for 60 seconds to win</li>
+            <li>❤️ You have 3 lives - health regenerates when you lose a life</li>
             <li>WASD: Move your fighter</li>
             <li>Mouse: Aim and fire</li>
+            <li>SHIFT: Dash ability (while moving)</li>
             <li>ESC: Pause game</li>
             <li>Collect power-ups for special abilities</li>
             <li>Survive increasingly difficult waves</li>

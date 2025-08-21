@@ -2,36 +2,41 @@ import Phaser from 'phaser';
 import { Player } from './Player';
 import { Enemy } from './Enemy';
 import { PowerUp } from './PowerUp';
-// Import the LeaderboardService to communicate with our backend
 import { LeaderboardService } from '../services/leaderboard';
+import { GAME_CONFIG } from './config/GameConfig';
+import { UIManager } from './managers/UIManager';
+import { WaveManager } from './managers/WaveManager';
 
 export class GameScene extends Phaser.Scene {
     private player!: Player;
-    private enemies: Enemy[] = [];
     private powerUps: PowerUp[] = [];
     private wasdKeys!: any;
     private score: number = 0;
-    private wave: number = 1;
-    private enemiesRemaining: number = 0;
-    private scoreText!: Phaser.GameObjects.Text;
-    private healthText!: Phaser.GameObjects.Text;
-    private waveText!: Phaser.GameObjects.Text;
-    private powerUpText!: Phaser.GameObjects.Text;
-    private timerText!: Phaser.GameObjects.Text;
+
+    // Managers
+    private uiManager!: UIManager;
+    private waveManager!: WaveManager;
 
     // Game state
     private startTime: number = 0;
     private isGameOver: boolean = false;
     private isPaused: boolean = false;
 
-    // Timer system
-    private gameTimeLimit: number = 60; // 60 seconds
-    private remainingTime: number = 60;
-    private gameTimer!: Phaser.Time.TimerEvent;
-
     // Wave system
-    private waveStartDelay: number = 3000;
-    private enemySpawnTimer!: Phaser.Time.TimerEvent;
+    private enemies: Enemy[] = [];
+    private enemiesRemaining: number = 0;
+    private wave: number = 1;
+    private waveStartDelay: number = GAME_CONFIG.TIMING.WAVE_START_DELAY;
+
+    // UI elements
+    private waveText!: Phaser.GameObjects.Text;
+    private powerUpText!: Phaser.GameObjects.Text;
+    private timerText!: Phaser.GameObjects.Text;
+
+    // Timer system
+    private gameTimeLimit: number = GAME_CONFIG.TIMING.GAME_DURATION;
+    private remainingTime: number = GAME_CONFIG.TIMING.GAME_DURATION;
+    private gameTimer!: Phaser.Time.TimerEvent;
 
     // Background elements
     private stars: Phaser.GameObjects.Graphics[] = [];
@@ -65,13 +70,17 @@ export class GameScene extends Phaser.Scene {
 
         // Reset game state on create
         this.score = 0;
-        this.wave = 1;
-        this.enemiesRemaining = 0;
         this.isGameOver = false;
         this.isPaused = false;
-        this.enemies = [];
         this.powerUps = [];
+        this.enemies = [];
+        this.enemiesRemaining = 0;
+        this.wave = 1;
         this.remainingTime = this.gameTimeLimit;
+
+        // Initialize managers
+        this.uiManager = new UIManager(this);
+        this.waveManager = new WaveManager(this);
 
         // Record the start time of the game session
         this.startTime = this.time.now;
@@ -104,73 +113,48 @@ export class GameScene extends Phaser.Scene {
             }
         });
 
-        // UI Elements
-        this.scoreText = this.add.text(16, 16, 'Score: 0', {
-            fontSize: '24px',
+        // Initialize UI text elements
+        this.waveText = this.add.text(width / 2, height / 2, '', {
+            fontSize: '32px',
             color: '#00ff88'
-        });
+        }).setOrigin(0.5).setVisible(false);
 
-        this.healthText = this.add.text(16, 50, 'Health: 100', {
-            fontSize: '24px',
-            color: '#ff4444'
-        });
-
-        this.waveText = this.add.text(16, 84, 'Wave: 1', {
-            fontSize: '24px',
-            color: '#4444ff'
-        });
-
-        this.timerText = this.add.text(16, 118, 'Time: 60s', {
+        this.powerUpText = this.add.text(width / 2, 100, '', {
             fontSize: '24px',
             color: '#ffaa00'
-        });
-
-        this.powerUpText = this.add.text(width / 2, 50, '', {
-            fontSize: '20px',
-            color: '#ffff44'
         }).setOrigin(0.5);
 
-        // Back to menu button
-        this.add.rectangle(width - 80, 30, 120, 40, 0x444444)
-            .setInteractive()
-            .on('pointerdown', () => {
-                this.scene.start('MenuScene');
-            });
-
-        this.add.text(width - 80, 30, 'MENU', {
-            fontSize: '16px',
+        this.timerText = this.add.text(width - 20, 20, '', {
+            fontSize: '18px',
             color: '#ffffff'
-        }).setOrigin(0.5);
+        }).setOrigin(1, 0);
+
+        // Create UI using UIManager
+        this.uiManager.createMenuButton();
 
         // Start first wave
-        this.startWave();
+        this.wave = 1;
+        this.waveManager.startWave(1);
     }
 
     private createStarfield() {
         const { width, height } = this.cameras.main;
         this.add.rectangle(width / 2, height / 2, width, height, 0x0a0a1e);
 
-        // Create animated stars
-        for (let i = 0; i < 150; i++) {
+        // Create fewer stars for better performance
+        for (let i = 0; i < 50; i++) { // Reduced from 150 to 50
             const x = Phaser.Math.Between(0, width);
             const y = Phaser.Math.Between(0, height);
-            const size = Phaser.Math.Between(1, 3);
-            const alpha = Phaser.Math.FloatBetween(0.3, 1);
+            const size = Phaser.Math.Between(1, 2); // Smaller stars
+            const alpha = Phaser.Math.FloatBetween(0.5, 1);
 
             const star = this.add.graphics();
             star.fillStyle(0xffffff, alpha);
             star.fillCircle(x, y, size);
             this.stars.push(star);
 
-            // Add twinkling effect
-            this.tweens.add({
-                targets: star,
-                alpha: { from: alpha, to: alpha * 0.3 },
-                duration: Phaser.Math.Between(1000, 3000),
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut'
-            });
+            // Disable twinkling effect to improve performance
+            // Twinkling animations cause lag
         }
     }
 
@@ -185,32 +169,37 @@ export class GameScene extends Phaser.Scene {
 
         if (this.isPaused) return;
 
-        // Update starfield
-        this.updateStarfield();
+        // Update starfield (reduced frequency)
+        if (this.time.now % 3 === 0) { // Update every 3rd frame
+            this.updateStarfield();
+        }
 
         // Update player
         this.player.update(this.wasdKeys, this.input.activePointer);
 
-        // Update enemies
-        this.enemies.forEach(enemy => {
-            enemy.update(this.player);
-        });
-
-        // Update power-ups
-        this.powerUps.forEach(powerUp => {
-            // PowerUps don't need update currently, but this is here for future extensions
-        });
-
-        // Update UI
-        this.updateUI();
-
-        // Check wave completion
-        if (this.enemies.length === 0 && this.enemiesRemaining === 0) {
-            this.completeWave();
+        // Update enemies (optimized)
+        const enemies = this.waveManager.getEnemies();
+        for (let i = 0; i < enemies.length; i++) {
+            enemies[i].update(this.player);
         }
 
-        // Check game over condition
-        if (this.player.health <= 0) {
+        // Update power-ups (simplified)
+        // PowerUps don't need frequent updates
+
+        // Update UI (reduced frequency)
+        if (this.time.now % 5 === 0) { // Update every 5th frame
+            this.updateUI();
+        }
+
+        // Check wave completion (reduced frequency)
+        if (this.time.now % 10 === 0) { // Check every 10th frame
+            if (this.waveManager.isWaveComplete()) {
+                this.completeWave();
+            }
+        }
+
+        // Check game over condition - now using lives system
+        if (this.player.isDead()) {
             this.gameOver('health');
         }
 
@@ -231,19 +220,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     private updateUI() {
-        this.scoreText.setText(`Score: ${this.score}`);
-        this.healthText.setText(`Health: ${this.player.health}${this.player.shield > 0 ? ` (+${this.player.shield})` : ''}`);
-        this.waveText.setText(`Wave: ${this.wave}`);
-
-        // Update timer display with color coding
-        if (this.remainingTime > 20) {
-            this.timerText.setColor('#ffaa00');
-        } else if (this.remainingTime > 10) {
-            this.timerText.setColor('#ff6600');
-        } else {
-            this.timerText.setColor('#ff0000');
-        }
-        this.timerText.setText(`Time: ${this.remainingTime}s`);
+        this.uiManager.updateUI(
+            this.player,
+            this.score,
+            this.waveManager.getCurrentWave(),
+            this.remainingTime
+        );
     }
 
     private togglePause() {
@@ -269,151 +251,12 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    private startWave() {
-        this.waveText.setText(`WAVE ${this.wave} STARTING...`);
 
-        // Calculate wave difficulty
-        const baseEnemies = 3;
-        const additionalEnemies = Math.floor(this.wave * 1.5);
-        const totalEnemies = baseEnemies + additionalEnemies;
 
-        this.enemiesRemaining = totalEnemies;
+    // This method is now handled by WaveManager
+    // Keeping for compatibility but functionality moved to WaveManager
 
-        // Start spawning enemies after delay
-        this.time.delayedCall(this.waveStartDelay, () => {
-            this.spawnWaveEnemies();
-        });
 
-        // Spawn power-ups occasionally
-        if (this.wave % 2 === 0) {
-            this.spawnPowerUp();
-        }
-    }
-
-    private spawnWaveEnemies() {
-        const enemiesToSpawn = Math.min(5, this.enemiesRemaining);
-
-        for (let i = 0; i < enemiesToSpawn; i++) {
-            this.time.delayedCall(i * 1000, () => {
-                this.spawnRandomEnemy();
-                this.enemiesRemaining--;
-            });
-        }
-
-        // Continue spawning if there are more enemies
-        if (this.enemiesRemaining > 0) {
-            this.time.delayedCall(enemiesToSpawn * 1000 + 3000, () => {
-                this.spawnWaveEnemies();
-            });
-        }
-    }
-
-    private spawnRandomEnemy() {
-        const { width, height } = this.cameras.main;
-
-        // Choose random spawn position at edge of screen
-        const side = Math.floor(Math.random() * 4);
-        let x, y;
-
-        switch (side) {
-            case 0: // Top
-                x = Phaser.Math.Between(50, width - 50);
-                y = 30;
-                break;
-            case 1: // Right
-                x = width - 30;
-                y = Phaser.Math.Between(50, height - 50);
-                break;
-            case 2: // Bottom
-                x = Phaser.Math.Between(50, width - 50);
-                y = height - 30;
-                break;
-            case 3: // Left
-                x = 30;
-                y = Phaser.Math.Between(50, height - 50);
-                break;
-            default:
-                x = 100;
-                y = 100;
-        }
-
-        // Choose enemy type based on wave
-        const enemyType = this.chooseEnemyType();
-        const enemy = new Enemy(this, x, y, enemyType);
-        this.enemies.push(enemy);
-
-        // Setup collisions for new enemy
-        this.setupEnemyCollisions(enemy);
-    }
-
-    private chooseEnemyType() {
-        const rand = Math.random();
-        const waveMultiplier = Math.min(this.wave / 10, 1);
-
-        if (this.wave === 1) {
-            return {
-                type: 'basic' as const,
-                health: 50,
-                speed: 100,
-                damage: 15,
-                fireRate: 1500,
-                color: 0xff4444,
-                size: 15,
-                scoreValue: 100,
-                behavior: 'aggressive' as const
-            };
-        }
-
-        if (rand < 0.4) {
-            return {
-                type: 'basic' as const,
-                health: 50 + this.wave * 10,
-                speed: 100 + this.wave * 5,
-                damage: 15 + this.wave * 2,
-                fireRate: 1500 - this.wave * 50,
-                color: 0xff4444,
-                size: 15,
-                scoreValue: 100,
-                behavior: 'aggressive' as const
-            };
-        } else if (rand < 0.7) {
-            return {
-                type: 'fast' as const,
-                health: 30 + this.wave * 5,
-                speed: 150 + this.wave * 8,
-                damage: 10 + this.wave,
-                fireRate: 1000 - this.wave * 30,
-                color: 0xffaa00,
-                size: 12,
-                scoreValue: 150,
-                behavior: 'patrol' as const
-            };
-        } else if (rand < 0.9) {
-            return {
-                type: 'heavy' as const,
-                health: 100 + this.wave * 20,
-                speed: 60 + this.wave * 3,
-                damage: 25 + this.wave * 3,
-                fireRate: 2000 - this.wave * 60,
-                color: 0x8844ff,
-                size: 20,
-                scoreValue: 200,
-                behavior: 'defensive' as const
-            };
-        } else {
-            return {
-                type: 'sniper' as const,
-                health: 40 + this.wave * 8,
-                speed: 80 + this.wave * 4,
-                damage: 30 + this.wave * 4,
-                fireRate: 2500 - this.wave * 80,
-                color: 0x44ffaa,
-                size: 14,
-                scoreValue: 250,
-                behavior: 'snipe' as const
-            };
-        }
-    }
 
     private spawnPowerUp() {
         const { width, height } = this.cameras.main;
@@ -431,7 +274,7 @@ export class GameScene extends Phaser.Scene {
 
                 // Handle special power-ups
                 if (message.includes('NUCLEAR')) {
-                    PowerUp.handleNukeEffect(this, this.enemies, this.player);
+                    PowerUp.handleNukeEffect(this, this.waveManager.getEnemies(), this.player);
                 }
             }
             this.powerUps = this.powerUps.filter(p => p !== powerUp);
@@ -446,19 +289,19 @@ export class GameScene extends Phaser.Scene {
     }
 
     private completeWave() {
-        this.wave++;
-        this.addScore(500 * this.wave); // Wave completion bonus
+        const currentWave = this.waveManager.getCurrentWave();
+        this.addScore(500 * currentWave); // Wave completion bonus
 
         // Show wave complete message
         const { width, height } = this.cameras.main;
-        const waveCompleteText = this.add.text(width / 2, height / 2, `WAVE ${this.wave - 1} COMPLETE!`, {
+        const waveCompleteText = this.add.text(width / 2, height / 2, `WAVE ${currentWave} COMPLETE!`, {
             fontSize: '32px',
             color: '#00ff88'
         }).setOrigin(0.5);
 
         this.time.delayedCall(2000, () => {
             waveCompleteText.destroy();
-            this.startWave();
+            this.waveManager.startWave(currentWave + 1);
         });
     }
 
@@ -490,19 +333,19 @@ export class GameScene extends Phaser.Scene {
 
     private setupCollisions() {
         // Player bullets vs enemies
-        this.enemies.forEach(enemy => {
+        this.waveManager.getEnemies().forEach((enemy: Enemy) => {
             this.setupEnemyCollisions(enemy);
         });
     }
 
-    private setupEnemyCollisions(enemy: Enemy) {
-        // Player bullets hit enemy - optimized collision
+    public setupEnemyCollisions(enemy: Enemy) {
+        // Player bullets hit enemy - optimized collision with reduced frequency
         this.physics.add.overlap(this.player.getBullets(), enemy.sprite, (bullet, enemySprite) => {
             const bulletSprite = bullet as Phaser.Physics.Arcade.Sprite;
-            
+
             // Prevent multiple collisions from same bullet
             if (!bulletSprite.active) return;
-            
+
             bulletSprite.setActive(false);
             bulletSprite.setVisible(false);
 
@@ -511,25 +354,29 @@ export class GameScene extends Phaser.Scene {
 
             if (destroyed) {
                 // Optimized enemy removal
-                const index = this.enemies.indexOf(enemy);
-                if (index > -1) {
-                    this.enemies.splice(index, 1);
-                }
+                this.waveManager.removeEnemy(enemy);
                 this.addScore(enemy.scoreValue);
             }
         });
 
-        // Enemy bullets hit player
+        // Enemy bullets hit player - with damage reduction
         this.physics.add.overlap(enemy.getBullets(), this.player.sprite, (bullet) => {
             const bulletSprite = bullet as Phaser.Physics.Arcade.Sprite;
+            if (!bulletSprite.active) return;
+            
             bulletSprite.setActive(false).setVisible(false);
             this.player.takeDamage(enemy.damage);
         });
 
-        // Enemy collision with player (ramming damage)
+        // Enemy collision with player (reduced ramming damage)
         this.physics.add.overlap(enemy.sprite, this.player.sprite, () => {
-            this.player.takeDamage(10);
-            enemy.takeDamage(20);
+            // Add cooldown to prevent spam damage
+            const currentTime = this.time.now;
+            if (!enemy.lastRamDamage || currentTime - enemy.lastRamDamage > 1000) {
+                this.player.takeDamage(5); // Reduced from 10
+                enemy.takeDamage(20);
+                enemy.lastRamDamage = currentTime;
+            }
         });
     }
 
@@ -594,7 +441,7 @@ export class GameScene extends Phaser.Scene {
         }
 
         this.add.text(400, 300, `Final Score: ${this.score}`, { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5).setDepth(1);
-        this.add.text(400, 325, `Waves Completed: ${this.wave - 1}`, { fontSize: '18px', color: '#cccccc' }).setOrigin(0.5).setDepth(1);
+        this.add.text(400, 325, `Waves Completed: ${this.waveManager.getCurrentWave() - 1}`, { fontSize: '18px', color: '#cccccc' }).setOrigin(0.5).setDepth(1);
 
         const statusText = this.add.text(400, 360, 'Submitting score...', { fontSize: '18px', color: '#cccccc' }).setOrigin(0.5).setDepth(1);
 

@@ -24,6 +24,7 @@ export class Enemy {
   public scoreValue: number;
   public behavior: string;
   public type: string;
+  public lastRamDamage: number = 0;
 
   private scene: Phaser.Scene;
   private bullets: Phaser.Physics.Arcade.Group;
