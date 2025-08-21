@@ -43,7 +43,7 @@ A blockchain-integrated space shooter game built with React, TypeScript, Phaser.
    VITE_PRIVY_APP_ID=your_privy_app_id
 
    # Wallet Private Key (for development only)
-   WALLET_PRIVATE_KEY=your_wallet_private_key
+   VITE_WALLET_PRIVATE_KEY=your_wallet_private_key
    ```
 
 4. **Database Setup**

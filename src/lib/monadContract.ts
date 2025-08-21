@@ -38,6 +38,35 @@ export function createWalletClientFromProvider() {
   throw new Error('No wallet provider found');
 }
 
+// Function to create wallet client from private key (for game operations)
+export function createGameWalletClient() {
+  const privateKey = import.meta.env.VITE_WALLET_PRIVATE_KEY;
+  
+  if (!privateKey) {
+    throw new Error('VITE_WALLET_PRIVATE_KEY not found in environment variables');
+  }
+
+  if (!privateKey.startsWith('0x')) {
+    throw new Error('VITE_WALLET_PRIVATE_KEY must start with 0x');
+  }
+
+  try {
+    const account = privateKeyToAccount(privateKey as `0x${string}`);
+    
+    const walletClient = createWalletClient({
+      account,
+      chain: monadTestnet,
+      transport: http(),
+    });
+
+    console.log('🎮 Game wallet created:', account.address);
+    return { walletClient, account };
+  } catch (error) {
+    console.error('❌ Error creating game wallet:', error);
+    throw new Error('Invalid VITE_WALLET_PRIVATE_KEY format');
+  }
+}
+
 // Function to read player data from smart contract
 export async function getPlayerData(gameAddress: string, playerAddress: string) {
   try {
@@ -129,6 +158,69 @@ export async function updatePlayerData(
     };
   } catch (error: any) {
     console.error('Error updating player data:', error);
+    
+    // Log more detailed error information
+    if (error.cause) {
+      console.error('Error cause:', error.cause);
+    }
+    if (error.details) {
+      console.error('Error details:', error.details);
+    }
+    
+    throw error;
+  }
+}
+
+// Function to update player data using game wallet (private key from .env)
+export async function updatePlayerDataWithGameWallet(
+  playerAddress: string, 
+  scoreAmount: number, 
+  transactionAmount: number
+) {
+  try {
+    console.log('🎮 Starting score submission with game wallet:', {
+      playerAddress,
+      scoreAmount,
+      transactionAmount,
+      contractAddress: MONAD_LEADERBOARD_CONTRACT_ADDRESS
+    });
+
+    // Check if the player address is valid
+    if (!playerAddress.startsWith('0x') || playerAddress.length !== 42) {
+      throw new Error('Invalid player address format');
+    }
+
+    // Create game wallet client from private key
+    const { walletClient, account } = createGameWalletClient();
+    console.log('🔑 Game wallet address:', account.address);
+
+    // Simulate the contract call first
+    console.log('🔍 Simulating contract call...');
+    const { request } = await publicClient.simulateContract({
+      address: MONAD_LEADERBOARD_CONTRACT_ADDRESS,
+      abi: MONAD_LEADERBOARD_ABI,
+      functionName: 'updatePlayerData',
+      args: [playerAddress, BigInt(scoreAmount), BigInt(transactionAmount)],
+      account: account.address,
+    });
+
+    console.log('✅ Simulation successful, executing transaction...');
+    const hash = await walletClient.writeContract(request);
+    console.log('📤 Transaction sent:', hash);
+    
+    // Tunggu transaksi selesai
+    console.log('⏳ Waiting for transaction confirmation...');
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    console.log('✅ Transaction confirmed:', receipt);
+    
+    return {
+      success: true,
+      transactionHash: hash,
+      receipt,
+      gameWalletAddress: account.address
+    };
+  } catch (error: any) {
+    console.error('❌ Error updating player data with game wallet:', error);
     
     // Log more detailed error information
     if (error.cause) {

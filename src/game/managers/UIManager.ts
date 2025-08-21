@@ -23,31 +23,31 @@ export class UIManager {
     this.scoreText = this.scene.add.text(16, 16, 'Score: 0', {
       fontSize: '24px',
       color: COLORS.SCORE
-    });
+    }).setDepth(100);
 
     // Health display
     this.healthText = this.scene.add.text(16, 50, 'Health: 100', {
       fontSize: '24px',
       color: COLORS.HEALTH
-    });
+    }).setDepth(100);
 
     // Wave display
     this.waveText = this.scene.add.text(16, 84, 'Wave: 1', {
       fontSize: '24px',
       color: COLORS.WAVE
-    });
+    }).setDepth(100);
 
     // Timer display
     this.timerText = this.scene.add.text(16, 118, 'Time: 60s', {
       fontSize: '24px',
       color: COLORS.TIMER
-    });
+    }).setDepth(100); // Ensure timer is always visible on top
 
     // Lives display
     this.livesText = this.scene.add.text(16, 152, 'Lives: 3', {
       fontSize: '24px',
       color: COLORS.LIVES
-    });
+    }).setDepth(100);
 
     // Power-up display
     const { width } = this.scene.cameras.main;
@@ -58,6 +58,12 @@ export class UIManager {
   }
 
   updateUI(player: Player, score: number, wave: number, remainingTime: number) {
+    // Safety check - ensure player exists
+    if (!player) {
+      console.warn('⚠️ Player not available for UI update');
+      return;
+    }
+
     // Update score
     this.scoreText.setText(`Score: ${score}`);
 

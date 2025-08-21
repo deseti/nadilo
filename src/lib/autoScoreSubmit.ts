@@ -75,6 +75,15 @@ async function processScoreQueue() {
         30 // Default game duration in seconds
       );
       
+      console.log('📊 Score submission result:', {
+        playerAddress: submission.playerAddress,
+        gameAddress: submission.gameAddress,
+        score: submission.score,
+        localSuccess: result.localSuccess,
+        blockchainSuccess: result.blockchainSuccess,
+        error: result.error
+      });
+      
       if (result.success) {
         console.log('✅ Score submitted successfully:', {
           score: submission.score,

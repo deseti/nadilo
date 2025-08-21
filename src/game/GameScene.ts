@@ -32,7 +32,6 @@ export class GameScene extends Phaser.Scene {
     // UI elements
     private waveText!: Phaser.GameObjects.Text;
     private powerUpText!: Phaser.GameObjects.Text;
-    private timerText!: Phaser.GameObjects.Text;
 
     // Timer system
     private gameTimeLimit: number = GAME_CONFIG.TIMING.GAME_DURATION;
@@ -61,13 +60,18 @@ export class GameScene extends Phaser.Scene {
     }
 
     create() {
+        console.log('🎮 GameScene create() started');
+
         // Check if avatar is selected - must select avatar first
         const selectedAvatar = this.registry.get('selectedAvatar');
         if (!selectedAvatar) {
+            console.log('❌ No avatar selected, returning to avatar selection');
             // If no avatar selected, return to avatar selection
             this.scene.start('AvatarSelectScene');
             return;
         }
+
+        console.log('✅ Avatar selected:', selectedAvatar.name);
 
         // Reset game state on create
         this.score = 0;
@@ -80,15 +84,18 @@ export class GameScene extends Phaser.Scene {
         this.wave = 1;
         this.remainingTime = this.gameTimeLimit;
 
-        // Initialize managers
-        this.uiManager = new UIManager(this);
-        this.waveManager = new WaveManager(this);
+        console.log('🔧 Initializing managers...');
 
-        // Record the start time of the game session
-        this.startTime = this.time.now;
-
-        // Start the game timer
-        this.startGameTimer();
+        try {
+            // Initialize managers
+            this.uiManager = new UIManager(this);
+            this.waveManager = new WaveManager(this);
+            console.log('✅ Managers initialized successfully');
+        } catch (error) {
+            console.error('❌ Error initializing managers:', error);
+            this.scene.start('MenuScene');
+            return;
+        }
 
         const { width, height } = this.cameras.main;
 
@@ -98,8 +105,31 @@ export class GameScene extends Phaser.Scene {
         // Create arena boundaries
         this.createArena();
 
-        // Create player
-        this.player = new Player(this, width / 2, height / 2, 'player');
+        console.log('👤 Creating player...');
+
+        try {
+            // Create player with selected avatar
+            this.player = new Player(this, width / 2, height / 2, selectedAvatar.id);
+            console.log('✅ Player created successfully');
+        } catch (error) {
+            console.error('❌ Error creating player:', error);
+            // Fallback to menu if player creation fails
+            this.scene.start('MenuScene');
+            return;
+        }
+
+        console.log('⏰ Starting game timer...');
+
+        // Record the start time of the game session
+        this.startTime = this.time.now;
+
+        // Start the game timer
+        this.startGameTimer();
+
+        // Initial UI update to show timer immediately (now player exists)
+        this.updateUI();
+
+        console.log('✅ GameScene initialization complete');
 
         // Setup collisions
         this.setupCollisions();
@@ -125,11 +155,6 @@ export class GameScene extends Phaser.Scene {
             fontSize: '24px',
             color: '#ffaa00'
         }).setOrigin(0.5);
-
-        this.timerText = this.add.text(width - 20, 20, '', {
-            fontSize: '18px',
-            color: '#ffffff'
-        }).setOrigin(1, 0);
 
         // Create UI using UIManager
         this.uiManager.createMenuButton();
@@ -193,10 +218,8 @@ export class GameScene extends Phaser.Scene {
         // Update power-ups (simplified)
         // PowerUps don't need frequent updates
 
-        // Update UI (reduced frequency)
-        if (this.time.now % 5 === 0) { // Update every 5th frame
-            this.updateUI();
-        }
+        // Update UI every frame to ensure timer is visible
+        this.updateUI();
 
         // Check wave completion (much less frequent)
         if (this.time.now % 60 === 0) { // Check every 60th frame (once per second at 60fps)
@@ -227,6 +250,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     private updateUI() {
+        // Safety check - ensure player and managers exist
+        if (!this.player || !this.uiManager || !this.waveManager) {
+            return;
+        }
+
         this.uiManager.updateUI(
             this.player,
             this.score,
@@ -347,7 +375,7 @@ export class GameScene extends Phaser.Scene {
     private setupCollisions() {
         // Setup global collision groups instead of individual enemy collisions
         // This is more efficient than setting up collision for each enemy individually
-        
+
         // We'll handle collisions in the update loop instead
         // to avoid creating too many collision objects
     }
@@ -423,13 +451,7 @@ export class GameScene extends Phaser.Scene {
             callback: () => {
                 this.remainingTime--;
 
-                // Simplified warning effects to prevent lag
-                if (this.remainingTime <= 10 && this.remainingTime > 0) {
-                    // Simple color change instead of animation
-                    this.timerText.setColor('#ff0000');
-                } else {
-                    this.timerText.setColor('#ffffff');
-                }
+                // Timer color changes are handled by UIManager in updateUI
 
                 if (this.remainingTime <= 0) {
                     this.gameTimer.destroy();

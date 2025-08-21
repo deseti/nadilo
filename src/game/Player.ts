@@ -45,9 +45,9 @@ export class Player {
   private dashDuration: number = 0;
   private isDashing: boolean = false;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, type: 'player' | 'enemy') {
+  constructor(scene: Phaser.Scene, x: number, y: number, avatarId: string) {
     this.scene = scene;
-    this.isPlayer = type === 'player';
+    this.isPlayer = true; // Always player in this context
 
     // Get avatar data if player
     if (this.isPlayer) {
@@ -61,22 +61,15 @@ export class Player {
       }
     }
 
-    // Create sprite with enhanced fighter jet design
-    if (this.isPlayer && this.avatarData) {
-      // Try to use selected avatar image first
-      if (scene.textures.exists(this.avatarData.id)) {
-        this.sprite = scene.physics.add.sprite(x, y, this.avatarData.id);
-        this.sprite.setScale(0.15); // Much smaller for better gameplay
-      } else {
-        // Fallback to created texture
-        this.sprite = scene.physics.add.sprite(x, y, '');
-        this.createAdvancedFighterTexture(this.avatarData.color, type);
-      }
+    // Create sprite with selected avatar
+    if (this.avatarData && scene.textures.exists(avatarId)) {
+      this.sprite = scene.physics.add.sprite(x, y, avatarId);
+      this.sprite.setScale(0.25); // Appropriate size for gameplay
     } else {
-      // Create colored sprite for enemies
-      const color = this.isPlayer ? 0x00ff88 : 0xff4444;
+      // Fallback to created texture
       this.sprite = scene.physics.add.sprite(x, y, '');
-      this.createAdvancedFighterTexture(color, type);
+      const color = this.avatarData?.color || 0x00ff88;
+      this.createAdvancedFighterTexture(color, 'player');
     }
 
     this.sprite.setCollideWorldBounds(true);
@@ -92,8 +85,8 @@ export class Player {
     });
 
     // Create simple bullet texture for better performance
-    const bulletColor = this.isPlayer ? (this.avatarData?.color || 0x00ff88) : 0xff4444;
-    this.createSimpleBulletTexture(bulletColor, type);
+    const bulletColor = this.avatarData?.color || 0x00ff88;
+    this.createSimpleBulletTexture(bulletColor, 'player');
 
     // Particle effects disabled for maximum performance
     // if (this.isPlayer) {

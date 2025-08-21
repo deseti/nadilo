@@ -127,8 +127,41 @@ function App() {
         address,
         playerName,
         score,
-        transactions
+        transactions,
+        gameAddress,
+        leaderboardContract
       });
+      
+      // Debug Monad integration before submitting
+      console.log('🔍 Debugging Monad integration...');
+      const debugResult = await import('./utils/debugMonadIntegration').then(module => 
+        module.debugMonadIntegration(address, gameAddress)
+      );
+      
+      if (!debugResult.canSubmit) {
+        console.warn('⚠️ Cannot submit to blockchain, but will save locally');
+        
+        let alertMessage = '⚠️ Score Submission Status:\n\n';
+        alertMessage += `✅ Local Database: Will be saved\n`;
+        alertMessage += `${debugResult.hasGameRole ? '✅' : '❌'} Game Wallet GAME_ROLE: ${debugResult.hasGameRole ? 'YES' : 'NO'}\n`;
+        alertMessage += `${debugResult.gameRegistered ? '✅' : '❌'} Game Registration: ${debugResult.gameRegistered ? 'YES' : 'NO'}\n`;
+        alertMessage += `${debugResult.canSubmit ? '✅' : '❌'} Blockchain Submission: ${debugResult.canSubmit ? 'YES' : 'NO'}\n\n`;
+        
+        if (debugResult.gameWalletAddress && debugResult.gameWalletAddress !== 'Not configured') {
+          alertMessage += `🎮 Game Wallet: ${debugResult.gameWalletAddress}\n`;
+          alertMessage += `👤 Player Wallet: ${address}\n\n`;
+        }
+        
+        if (!debugResult.hasGameRole) {
+          alertMessage += '📝 Issue: Game wallet not configured or missing GAME_ROLE\n';
+          alertMessage += '💡 Solution: Check VITE_WALLET_PRIVATE_KEY in .env file\n\n';
+        }
+        
+        alertMessage += 'Your score will still be saved locally and visible in the game!';
+        alert(alertMessage);
+      } else {
+        console.log('✅ All checks passed, submitting to blockchain...');
+      }
       
       // Auto submit to blockchain and local database
       await autoSubmitScore(
@@ -241,6 +274,69 @@ function App() {
               />
             )}
             
+            {/* Development Tools */}
+            {process.env.NODE_ENV === 'development' && (effectivePlayerAddress || monadWalletAddress) && (
+              <div style={{ 
+                background: '#1a1a1a', 
+                border: '1px solid #333', 
+                borderRadius: '8px', 
+                padding: '15px', 
+                margin: '10px 0',
+                fontSize: '12px'
+              }}>
+                <h4 style={{ color: '#676FFF', margin: '0 0 10px 0' }}>🧪 Development Tools</h4>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={async () => {
+                      const address = effectivePlayerAddress || monadWalletAddress;
+                      if (address) {
+                        const { debugMonadIntegration } = await import('./utils/debugMonadIntegration');
+                        await debugMonadIntegration(address, gameAddress);
+                      }
+                    }}
+                    style={{
+                      background: '#333',
+                      border: '1px solid #555',
+                      color: '#fff',
+                      padding: '5px 10px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '11px'
+                    }}
+                  >
+                    🔍 Debug Integration
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const address = effectivePlayerAddress || monadWalletAddress;
+                      if (address) {
+                        const { testWithCurrentGame } = await import('./utils/testScoreSubmission');
+                        const result = await testWithCurrentGame(address, 1000);
+                        alert(result.success ? 
+                          `✅ Test successful!\nNew Score: ${result.newScore}\nTotal Score: ${result.totalScore}` :
+                          `❌ Test failed: ${result.error}`
+                        );
+                      }
+                    }}
+                    style={{
+                      background: '#676FFF',
+                      border: '1px solid #676FFF',
+                      color: '#fff',
+                      padding: '5px 10px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '11px'
+                    }}
+                  >
+                    🧪 Test Score Submit
+                  </button>
+                </div>
+                <p style={{ margin: '8px 0 0 0', color: '#888', fontSize: '10px' }}>
+                  Wallet: {effectivePlayerAddress || monadWalletAddress} | Game: {gameAddress}
+                </p>
+              </div>
+            )}
+
             {/* Game and Leaderboard */}
             <div className="game-section">
               {/* Pass the unique playerID as a prop to the Game component */}
