@@ -16,15 +16,15 @@ export class WaveManager {
   startWave(waveNumber: number): void {
     this.currentWave = waveNumber;
     
-    // Show wave start message
+    // Simplified wave start message (no animations)
     const { width, height } = this.scene.cameras.main;
-    const waveText = this.scene.add.text(width / 2, height / 2, `WAVE ${waveNumber} STARTING...`, {
-      fontSize: '32px',
+    const waveText = this.scene.add.text(width / 2, height / 2, `WAVE ${waveNumber}`, {
+      fontSize: '28px',
       color: '#00ff88'
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(100);
 
-    // Remove wave text after delay
-    this.scene.time.delayedCall(2000, () => {
+    // Quick removal of wave text
+    this.scene.time.delayedCall(800, () => { // Reduced from 2000 to 800
       waveText.destroy();
     });
 
@@ -35,17 +35,17 @@ export class WaveManager {
     
     this.enemiesRemaining = totalEnemies;
 
-    // Start spawning enemies after delay
-    this.scene.time.delayedCall(GAME_CONFIG.TIMING.WAVE_START_DELAY, () => {
+    // Start spawning enemies immediately (no delay)
+    this.scene.time.delayedCall(500, () => { // Reduced delay
       this.spawnWaveEnemies();
     });
   }
 
   private spawnWaveEnemies(): void {
-    const enemiesToSpawn = Math.min(5, this.enemiesRemaining);
+    const enemiesToSpawn = Math.min(3, this.enemiesRemaining); // Reduced from 5 to 3
     
     for (let i = 0; i < enemiesToSpawn; i++) {
-      this.scene.time.delayedCall(i * 1000, () => {
+      this.scene.time.delayedCall(i * 500, () => { // Reduced from 1000 to 500
         this.spawnRandomEnemy();
         this.enemiesRemaining--;
       });
@@ -53,7 +53,7 @@ export class WaveManager {
 
     // Continue spawning if there are more enemies
     if (this.enemiesRemaining > 0) {
-      this.scene.time.delayedCall(enemiesToSpawn * 1000 + 3000, () => {
+      this.scene.time.delayedCall(enemiesToSpawn * 500 + 1500, () => { // Reduced delays
         this.spawnWaveEnemies();
       });
     }
@@ -109,6 +109,11 @@ export class WaveManager {
   removeEnemy(enemy: Enemy): void {
     const index = this.enemies.indexOf(enemy);
     if (index > -1) {
+      // Clean up enemy sprite and bullets before removing
+      enemy.sprite.destroy();
+      enemy.getBullets().clear(true, true);
+      
+      // Remove from array efficiently
       this.enemies.splice(index, 1);
     }
   }

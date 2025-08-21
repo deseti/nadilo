@@ -21,6 +21,7 @@ export class GameScene extends Phaser.Scene {
     private startTime: number = 0;
     private isGameOver: boolean = false;
     private isPaused: boolean = false;
+    private isWaveCompleting: boolean = false;
 
     // Wave system
     private enemies: Enemy[] = [];
@@ -72,6 +73,7 @@ export class GameScene extends Phaser.Scene {
         this.score = 0;
         this.isGameOver = false;
         this.isPaused = false;
+        this.isWaveCompleting = false;
         this.powerUps = [];
         this.enemies = [];
         this.enemiesRemaining = 0;
@@ -183,6 +185,11 @@ export class GameScene extends Phaser.Scene {
             enemies[i].update(this.player);
         }
 
+        // Manual collision detection (more efficient than Phaser's overlap)
+        if (this.time.now % 3 === 0) { // Check collisions every 3rd frame
+            this.checkCollisions();
+        }
+
         // Update power-ups (simplified)
         // PowerUps don't need frequent updates
 
@@ -191,8 +198,8 @@ export class GameScene extends Phaser.Scene {
             this.updateUI();
         }
 
-        // Check wave completion (reduced frequency)
-        if (this.time.now % 10 === 0) { // Check every 10th frame
+        // Check wave completion (much less frequent)
+        if (this.time.now % 60 === 0) { // Check every 60th frame (once per second at 60fps)
             if (this.waveManager.isWaveComplete()) {
                 this.completeWave();
             }
@@ -289,18 +296,24 @@ export class GameScene extends Phaser.Scene {
     }
 
     private completeWave() {
+        // Prevent multiple calls
+        if (this.isWaveCompleting) return;
+        this.isWaveCompleting = true;
+
         const currentWave = this.waveManager.getCurrentWave();
         this.addScore(500 * currentWave); // Wave completion bonus
 
-        // Show wave complete message
+        // Show simple wave complete message without animations
         const { width, height } = this.cameras.main;
         const waveCompleteText = this.add.text(width / 2, height / 2, `WAVE ${currentWave} COMPLETE!`, {
             fontSize: '32px',
             color: '#00ff88'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(100);
 
-        this.time.delayedCall(2000, () => {
+        // Quick transition to next wave
+        this.time.delayedCall(1000, () => { // Reduced from 2000 to 1000
             waveCompleteText.destroy();
+            this.isWaveCompleting = false;
             this.waveManager.startWave(currentWave + 1);
         });
     }
@@ -332,52 +345,75 @@ export class GameScene extends Phaser.Scene {
     }
 
     private setupCollisions() {
-        // Player bullets vs enemies
-        this.waveManager.getEnemies().forEach((enemy: Enemy) => {
-            this.setupEnemyCollisions(enemy);
-        });
+        // Setup global collision groups instead of individual enemy collisions
+        // This is more efficient than setting up collision for each enemy individually
+        
+        // We'll handle collisions in the update loop instead
+        // to avoid creating too many collision objects
     }
 
     public setupEnemyCollisions(enemy: Enemy) {
-        // Player bullets hit enemy - optimized collision with reduced frequency
-        this.physics.add.overlap(this.player.getBullets(), enemy.sprite, (bullet, enemySprite) => {
-            const bulletSprite = bullet as Phaser.Physics.Arcade.Sprite;
+        // Simplified collision setup - just add to collision groups
+        // Actual collision detection is handled in checkCollisions method
+    }
 
-            // Prevent multiple collisions from same bullet
-            if (!bulletSprite.active) return;
+    private checkCollisions() {
+        const enemies = this.waveManager.getEnemies();
+        const playerBullets = this.player.getBullets().children.entries;
+        const playerSprite = this.player.sprite;
 
-            bulletSprite.setActive(false);
-            bulletSprite.setVisible(false);
+        // Check player bullets vs enemies
+        for (let i = 0; i < enemies.length; i++) {
+            const enemy = enemies[i];
+            if (!enemy.sprite.active) continue;
 
-            const destroyed = enemy.takeDamage(25);
-            this.addScore(50);
+            // Check player bullets hitting enemy
+            for (let j = 0; j < playerBullets.length; j++) {
+                const bullet = playerBullets[j] as Phaser.Physics.Arcade.Sprite;
+                if (!bullet.active) continue;
 
-            if (destroyed) {
-                // Optimized enemy removal
-                this.waveManager.removeEnemy(enemy);
-                this.addScore(enemy.scoreValue);
+                if (this.checkDistance(bullet, enemy.sprite, 20)) {
+                    bullet.setActive(false).setVisible(false);
+                    const destroyed = enemy.takeDamage(25);
+                    this.addScore(50);
+
+                    if (destroyed) {
+                        this.waveManager.removeEnemy(enemy);
+                        this.addScore(enemy.scoreValue);
+                        break; // Enemy destroyed, no need to check more bullets
+                    }
+                }
             }
-        });
 
-        // Enemy bullets hit player - with damage reduction
-        this.physics.add.overlap(enemy.getBullets(), this.player.sprite, (bullet) => {
-            const bulletSprite = bullet as Phaser.Physics.Arcade.Sprite;
-            if (!bulletSprite.active) return;
-            
-            bulletSprite.setActive(false).setVisible(false);
-            this.player.takeDamage(enemy.damage);
-        });
+            // Check enemy bullets hitting player
+            const enemyBullets = enemy.getBullets().children.entries;
+            for (let k = 0; k < enemyBullets.length; k++) {
+                const bullet = enemyBullets[k] as Phaser.Physics.Arcade.Sprite;
+                if (!bullet.active) continue;
 
-        // Enemy collision with player (reduced ramming damage)
-        this.physics.add.overlap(enemy.sprite, this.player.sprite, () => {
-            // Add cooldown to prevent spam damage
-            const currentTime = this.time.now;
-            if (!enemy.lastRamDamage || currentTime - enemy.lastRamDamage > 1000) {
-                this.player.takeDamage(5); // Reduced from 10
-                enemy.takeDamage(20);
-                enemy.lastRamDamage = currentTime;
+                if (this.checkDistance(bullet, playerSprite, 25)) {
+                    bullet.setActive(false).setVisible(false);
+                    this.player.takeDamage(enemy.damage);
+                }
             }
-        });
+
+            // Check enemy ramming player
+            if (this.checkDistance(enemy.sprite, playerSprite, 30)) {
+                const currentTime = this.time.now;
+                if (!enemy.lastRamDamage || currentTime - enemy.lastRamDamage > 1000) {
+                    this.player.takeDamage(5);
+                    enemy.takeDamage(20);
+                    enemy.lastRamDamage = currentTime;
+                }
+            }
+        }
+    }
+
+    private checkDistance(obj1: Phaser.GameObjects.GameObject, obj2: Phaser.GameObjects.GameObject, maxDistance: number): boolean {
+        const dx = (obj1 as any).x - (obj2 as any).x;
+        const dy = (obj1 as any).y - (obj2 as any).y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < maxDistance;
     }
 
     private startGameTimer() {
@@ -387,20 +423,12 @@ export class GameScene extends Phaser.Scene {
             callback: () => {
                 this.remainingTime--;
 
-                // Add warning effects when time is running low
+                // Simplified warning effects to prevent lag
                 if (this.remainingTime <= 10 && this.remainingTime > 0) {
-                    // Flash the timer text
-                    this.tweens.add({
-                        targets: this.timerText,
-                        scaleX: 1.2,
-                        scaleY: 1.2,
-                        duration: 100,
-                        yoyo: true,
-                        ease: 'Power2'
-                    });
-
-                    // Play warning sound effect (if you have audio)
-                    // this.sound.play('warning');
+                    // Simple color change instead of animation
+                    this.timerText.setColor('#ff0000');
+                } else {
+                    this.timerText.setColor('#ffffff');
                 }
 
                 if (this.remainingTime <= 0) {
