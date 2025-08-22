@@ -1,4 +1,4 @@
-import { createPublicClient, createWalletClient, http, custom, parseEther } from 'viem';
+import { createPublicClient, createWalletClient, http, custom } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import MONAD_LEADERBOARD_ABI from './monadLeaderboardABI';
 
@@ -53,10 +53,20 @@ export function createGameWalletClient() {
   try {
     const account = privateKeyToAccount(privateKey as `0x${string}`);
     
+    // Try different RPC endpoints for better compatibility
+    const rpcUrls = [
+      'https://testnet-rpc.monad.xyz',
+      'https://rpc.monad.xyz', // Alternative RPC
+    ];
+    
     const walletClient = createWalletClient({
       account,
       chain: monadTestnet,
-      transport: http(),
+      transport: http(rpcUrls[0], {
+        timeout: 30000, // 30 second timeout
+        retryCount: 3,
+        retryDelay: 1000,
+      }),
     });
 
     console.log('🎮 Game wallet created:', account.address);
@@ -190,25 +200,70 @@ export async function updatePlayerDataWithGameWallet(
       throw new Error('Invalid player address format');
     }
 
+    // Try alternative approach using raw transaction
+    return await submitScoreWithRawTransaction(playerAddress, scoreAmount, transactionAmount);
+    
+  } catch (error) {
+    console.error('❌ Error updating player data with game wallet:', error);
+    const errorObj = error as any;
+    if (errorObj?.cause) {
+      console.error('Error cause:', errorObj.cause);
+    }
+    if (errorObj?.details) {
+      console.error('Error details:', errorObj.details);
+    }
+    
+    throw error;
+  }
+}
+
+// Alternative method using raw transaction for better Monad compatibility
+async function submitScoreWithRawTransaction(
+  playerAddress: string,
+  scoreAmount: number,
+  transactionAmount: number
+) {
+  try {
+    console.log('🔄 Trying raw transaction approach...');
+    
     // Create game wallet client from private key
     const { walletClient, account } = createGameWalletClient();
     console.log('🔑 Game wallet address:', account.address);
 
-    // Simulate the contract call first
-    console.log('🔍 Simulating contract call...');
-    const { request } = await publicClient.simulateContract({
-      address: MONAD_LEADERBOARD_CONTRACT_ADDRESS,
+    // Encode the function call data manually
+    const { encodeFunctionData } = await import('viem');
+    
+    const data = encodeFunctionData({
       abi: MONAD_LEADERBOARD_ABI,
       functionName: 'updatePlayerData',
       args: [playerAddress, BigInt(scoreAmount), BigInt(transactionAmount)],
-      account: account.address,
     });
 
-    console.log('✅ Simulation successful, executing transaction...');
-    const hash = await walletClient.writeContract(request);
+    console.log('📝 Encoded function data:', data);
+
+    // Get current gas price and nonce
+    const gasPrice = await publicClient.getGasPrice();
+    const nonce = await publicClient.getTransactionCount({ address: account.address });
+    
+    console.log('⛽ Gas price:', gasPrice, 'Nonce:', nonce);
+
+    // Create transaction with minimal parameters
+    const transaction = {
+      to: MONAD_LEADERBOARD_CONTRACT_ADDRESS as `0x${string}`,
+      data,
+      gas: 300000n, // Fixed gas limit
+      gasPrice: gasPrice * 2n, // Double the gas price for faster confirmation
+      nonce,
+      value: 0n,
+    };
+    
+    console.log('📤 Sending raw transaction:', transaction);
+    
+    // Send transaction
+    const hash = await walletClient.sendTransaction(transaction);
     console.log('📤 Transaction sent:', hash);
     
-    // Tunggu transaksi selesai
+    // Wait for transaction confirmation
     console.log('⏳ Waiting for transaction confirmation...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     console.log('✅ Transaction confirmed:', receipt);
@@ -219,15 +274,17 @@ export async function updatePlayerDataWithGameWallet(
       receipt,
       gameWalletAddress: account.address
     };
-  } catch (error: any) {
-    console.error('❌ Error updating player data with game wallet:', error);
+    
+  } catch (error) {
+    console.error('❌ Raw transaction failed:', error);
     
     // Log more detailed error information
-    if (error.cause) {
-      console.error('Error cause:', error.cause);
+    const errorObj = error as any;
+    if (errorObj?.cause) {
+      console.error('Error cause:', errorObj.cause);
     }
-    if (error.details) {
-      console.error('Error details:', error.details);
+    if (errorObj?.details) {
+      console.error('Error details:', errorObj.details);
     }
     
     throw error;

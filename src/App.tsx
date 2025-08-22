@@ -13,21 +13,21 @@ import { hasGameRole } from './lib/gameRegistration';
 function App() {
   // Main hook from Privy to access authentication status and user data
   const { ready, authenticated, login, logout, user } = usePrivy();
-  
+
   // State for Monad Games ID integration
   const [monadWalletAddress, setMonadWalletAddress] = useState<string>('');
   const [userHasGameRole, setUserHasGameRole] = useState<boolean>(false);
-  
+
   // State for address editing and sync
   const [effectivePlayerAddress, setEffectivePlayerAddress] = useState<string>('');
   const [syncedMonadAddress, setSyncedMonadAddress] = useState<string>('');
 
   // Use the custom hook for Monad Games ID user data
-  const { 
-    user: monadUser, 
-    hasUsername, 
-    isLoading: isLoadingUser, 
-    error: userError 
+  const {
+    user: monadUser,
+    hasUsername,
+    isLoading: isLoadingUser,
+    error: userError
   } = useMonadGamesUser(monadWalletAddress);
 
   // Check for Monad Games ID cross-app account
@@ -35,13 +35,13 @@ function App() {
     const checkMonadGamesID = async () => {
       if (authenticated && user && ready) {
         console.log("🔍 Checking Monad Games ID integration...");
-        
+
         // Check if user has linkedAccounts
         if (user.linkedAccounts.length > 0) {
           // Get the cross app account created using Monad Games ID
           const crossAppAccount: CrossAppAccountWithMetadata = user.linkedAccounts.filter(
-            account => account.type === "cross_app" && 
-            account.providerApp.id === "cmd8euall0037le0my79qpz42"
+            account => account.type === "cross_app" &&
+              account.providerApp.id === "cmd8euall0037le0my79qpz42"
           )[0] as CrossAppAccountWithMetadata;
 
           // The first embedded wallet created using Monad Games ID, is the wallet address
@@ -66,7 +66,7 @@ function App() {
   // Function to check game role permission
   const checkGameRole = async (walletAddress: string) => {
     if (!walletAddress) return;
-    
+
     try {
       console.log("🔍 Checking GAME_ROLE for wallet:", walletAddress);
       const hasRole = await hasGameRole(walletAddress);
@@ -121,7 +121,7 @@ function App() {
   const handleScoreUpdate = async (score: number, transactions: number) => {
     const address = effectivePlayerAddress || monadWalletAddress || user?.wallet?.address;
     const playerName = monadUser?.username || user?.email?.address || 'Anonymous';
-    
+
     if (address && score > 0) {
       console.log('🎯 Game finished! Auto-submitting score:', {
         address,
@@ -131,38 +131,38 @@ function App() {
         gameAddress,
         leaderboardContract
       });
-      
+
       // Debug Monad integration before submitting
       console.log('🔍 Debugging Monad integration...');
-      const debugResult = await import('./utils/debugMonadIntegration').then(module => 
+      const debugResult = await import('./utils/debugMonadIntegration').then(module =>
         module.debugMonadIntegration(address, gameAddress)
       );
-      
+
       if (!debugResult.canSubmit) {
         console.warn('⚠️ Cannot submit to blockchain, but will save locally');
-        
+
         let alertMessage = '⚠️ Score Submission Status:\n\n';
         alertMessage += `✅ Local Database: Will be saved\n`;
         alertMessage += `${debugResult.hasGameRole ? '✅' : '❌'} Game Wallet GAME_ROLE: ${debugResult.hasGameRole ? 'YES' : 'NO'}\n`;
         alertMessage += `${debugResult.gameRegistered ? '✅' : '❌'} Game Registration: ${debugResult.gameRegistered ? 'YES' : 'NO'}\n`;
         alertMessage += `${debugResult.canSubmit ? '✅' : '❌'} Blockchain Submission: ${debugResult.canSubmit ? 'YES' : 'NO'}\n\n`;
-        
+
         if (debugResult.gameWalletAddress && debugResult.gameWalletAddress !== 'Not configured') {
           alertMessage += `🎮 Game Wallet: ${debugResult.gameWalletAddress}\n`;
           alertMessage += `👤 Player Wallet: ${address}\n\n`;
         }
-        
+
         if (!debugResult.hasGameRole) {
           alertMessage += '📝 Issue: Game wallet not configured or missing GAME_ROLE\n';
           alertMessage += '💡 Solution: Check VITE_WALLET_PRIVATE_KEY in .env file\n\n';
         }
-        
+
         alertMessage += 'Your score will still be saved locally and visible in the game!';
         alert(alertMessage);
       } else {
         console.log('✅ All checks passed, submitting to blockchain...');
       }
-      
+
       // Auto submit to blockchain and local database
       await autoSubmitScore(
         address,
@@ -171,7 +171,7 @@ function App() {
         score,
         transactions
       );
-      
+
       // Refresh blockchain leaderboard after submission
       setTimeout(() => {
         window.location.reload(); // Simple way to refresh all data
@@ -183,7 +183,7 @@ function App() {
   const defaultAddress = monadWalletAddress || user?.wallet?.address || '';
   const playerID = effectivePlayerAddress || defaultAddress || user?.email?.address || user?.id || 'Anonymous';
   const displayName = monadUser?.username || user?.email?.address || user?.id || 'Anonymous';
-  
+
   // Game address - using your actual registered game address
   const gameAddress = '0x5b84Dc548e45cC4f1498b95C000C748c1c953f64';
   const leaderboardContract = '0xceCBFF203C8B6044F52CE23D914A1bfD997541A4';
@@ -204,12 +204,12 @@ function App() {
                 ) : (
                   <div>
                     <span>⚠️ Monad Games ID connected but no username</span>
-                    <a 
-                      href="https://monad-games-id-site.vercel.app/" 
-                      target="_blank" 
+                    <a
+                      href="https://monad-games-id-site.vercel.app/"
+                      target="_blank"
                       rel="noopener noreferrer"
-                      style={{ 
-                        marginLeft: '10px', 
+                      style={{
+                        marginLeft: '10px',
                         color: '#676FFF',
                         textDecoration: 'underline'
                       }}
@@ -273,14 +273,14 @@ function App() {
                 }}
               />
             )}
-            
+
             {/* Development Tools */}
             {process.env.NODE_ENV === 'development' && (effectivePlayerAddress || monadWalletAddress) && (
-              <div style={{ 
-                background: '#1a1a1a', 
-                border: '1px solid #333', 
-                borderRadius: '8px', 
-                padding: '15px', 
+              <div style={{
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '8px',
+                padding: '15px',
                 margin: '10px 0',
                 fontSize: '12px'
               }}>
@@ -312,7 +312,7 @@ function App() {
                       if (address) {
                         const { testWithCurrentGame } = await import('./utils/testScoreSubmission');
                         const result = await testWithCurrentGame(address, 1000);
-                        alert(result.success ? 
+                        alert(result.success ?
                           `✅ Test successful!\nNew Score: ${result.newScore}\nTotal Score: ${result.totalScore}` :
                           `❌ Test failed: ${result.error}`
                         );
@@ -330,6 +330,30 @@ function App() {
                   >
                     🧪 Test Score Submit
                   </button>
+                  <button
+                    onClick={async () => {
+                      const { testAutoSubmit, testEnvironmentVariables } = await import('./utils/testAutoSubmit');
+                      console.log('🔧 Environment Variables:', testEnvironmentVariables());
+                      const address = effectivePlayerAddress || monadWalletAddress || user?.wallet?.address;
+                      if (address) {
+                        await testAutoSubmit(address);
+                      } else {
+                        console.error('❌ No player address available for testing');
+                      }
+                    }}
+                    style={{
+                      background: '#FF6B35',
+                      border: '1px solid #FF6B35',
+                      color: '#fff',
+                      padding: '5px 10px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      marginLeft: '5px'
+                    }}
+                  >
+                    🔍 Debug Auto Submit
+                  </button>
                 </div>
                 <p style={{ margin: '8px 0 0 0', color: '#888', fontSize: '10px' }}>
                   Wallet: {effectivePlayerAddress || monadWalletAddress} | Game: {gameAddress}
@@ -340,8 +364,8 @@ function App() {
             {/* Game and Leaderboard */}
             <div className="game-section">
               {/* Pass the unique playerID as a prop to the Game component */}
-              <Game 
-                playerID={playerID} 
+              <Game
+                playerID={playerID}
                 onScoreUpdate={handleScoreUpdate}
               />
             </div>
@@ -351,10 +375,10 @@ function App() {
           <div className="login-container">
             <h2>Join the Battle Arena</h2>
             <p>Sign in with Monad Games ID to start fighting and climb the leaderboard!</p>
-            
+
             <div className="login-options">
-              <button 
-                className="login-button monad-login" 
+              <button
+                className="login-button monad-login"
                 onClick={async () => {
                   console.log("🚀 Starting Monad Games ID login...");
                   try {
@@ -372,7 +396,7 @@ function App() {
                 🎮 Sign In with Monad Games ID
               </button>
             </div>
-            
+
             <p style={{ fontSize: '12px', color: '#888', marginTop: '15px' }}>
               New to Monad Games ID? <a href="https://monad-games-id-site.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: '#676FFF' }}>Register here</a>
             </p>
