@@ -207,7 +207,7 @@ export class Player {
     this.damageParticles = null;
   }
 
-  update(keys?: any, pointer?: Phaser.Input.Pointer) {
+  update(keys?: any, pointer?: Phaser.Input.Pointer, mobileInput?: any, mobileShoot?: boolean, mobileDash?: boolean) {
     if (!this.isPlayer) return;
 
     const currentTime = this.scene.time.now;
@@ -241,25 +241,42 @@ export class Player {
 
     const currentSpeed = this.isDashing ? this.speed * 2 : this.speed;
 
-    if (keys?.A?.isDown) {
-      velocityX = -currentSpeed;
-      isMoving = true;
-    } else if (keys?.D?.isDown) {
-      velocityX = currentSpeed;
-      isMoving = true;
+    // Handle mobile input
+    if (mobileInput && mobileInput.active) {
+      velocityX = mobileInput.x * currentSpeed;
+      velocityY = mobileInput.y * currentSpeed;
+      isMoving = Math.abs(mobileInput.x) > 0.1 || Math.abs(mobileInput.y) > 0.1;
+    } else {
+      // Handle keyboard input
+      if (keys?.A?.isDown) {
+        velocityX = -currentSpeed;
+        isMoving = true;
+      } else if (keys?.D?.isDown) {
+        velocityX = currentSpeed;
+        isMoving = true;
+      }
+
+      if (keys?.W?.isDown) {
+        velocityY = -currentSpeed;
+        isMoving = true;
+      } else if (keys?.S?.isDown) {
+        velocityY = currentSpeed;
+        isMoving = true;
+      }
     }
 
-    if (keys?.W?.isDown) {
-      velocityY = -currentSpeed;
-      isMoving = true;
-    } else if (keys?.S?.isDown) {
-      velocityY = currentSpeed;
-      isMoving = true;
-    }
-
-    // Dash ability (Shift key)
-    if (keys?.SHIFT?.isDown && !this.isDashing && this.dashCooldown <= 0 && isMoving) {
+    // Dash ability (Shift key or mobile dash button)
+    const dashTriggered = (keys?.SHIFT?.isDown) || mobileDash;
+    if (dashTriggered && !this.isDashing && this.dashCooldown <= 0 && isMoving) {
       this.performDash();
+    }
+
+    // Mobile shooting
+    if (mobileShoot && currentTime - this.lastShot > this.shootCooldown) {
+      // Shoot in the direction the player is facing or towards center of screen
+      const targetX = this.sprite.x + (this.lastMovement.x > 0 ? 100 : this.lastMovement.x < 0 ? -100 : 0);
+      const targetY = this.sprite.y + (this.lastMovement.y > 0 ? 100 : this.lastMovement.y < 0 ? -100 : -100);
+      this.shoot(targetX, targetY);
     }
 
     // Apply movement with smooth interpolation

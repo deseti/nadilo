@@ -141,7 +141,16 @@ export class GameScene extends Phaser.Scene {
         this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
             // Prevent shooting if the game is over or paused
             if (!this.isGameOver && !this.isPaused) {
-                this.player.shoot(pointer.worldX, pointer.worldY);
+                // Check if it's mobile and if the pointer is in the game area (not on controls)
+                const isMobile = this.registry.get('isMobile');
+                if (isMobile) {
+                    // For mobile, only shoot if pointer is in upper part of screen (game area)
+                    if (pointer.y < this.cameras.main.height - 200) {
+                        this.player.shoot(pointer.worldX, pointer.worldY);
+                    }
+                } else {
+                    this.player.shoot(pointer.worldX, pointer.worldY);
+                }
             }
         });
 
@@ -201,8 +210,12 @@ export class GameScene extends Phaser.Scene {
             this.updateStarfield();
         }
 
-        // Update player
-        this.player.update(this.wasdKeys, this.input.activePointer);
+        // Update player with mobile input support
+        const mobileInput = this.registry.get('mobileInput');
+        const mobileShoot = this.registry.get('mobileShoot');
+        const mobileDash = this.registry.get('mobileDash');
+        
+        this.player.update(this.wasdKeys, this.input.activePointer, mobileInput, mobileShoot, mobileDash);
 
         // Update enemies (optimized)
         const enemies = this.waveManager.getEnemies();
