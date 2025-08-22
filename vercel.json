@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/submit-score.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ]
+}

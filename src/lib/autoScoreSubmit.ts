@@ -1,5 +1,3 @@
-import { ScoreRelay } from './scoreRelay';
-
 // Interface for score submission
 interface ScoreSubmission {
   playerAddress: string;
@@ -7,6 +5,15 @@ interface ScoreSubmission {
   gameAddress: string;
   score: number;
   transactions: number;
+}
+
+// Interface for API response
+interface ApiResponse {
+  success: boolean;
+  transactionHash?: string;
+  gameWalletAddress?: string;
+  error?: string;
+  details?: string;
 }
 
 // Queue to store pending score submissions
@@ -66,32 +73,30 @@ async function processScoreQueue() {
     try {
       console.log('📊 Processing score submission:', submission);
       
-      // Use ScoreRelay to submit score
-      const result = await ScoreRelay.submitScore(
+      // Submit score via secure API endpoint
+      const result = await submitScoreToAPI(
         submission.playerAddress,
-        submission.playerName,
-        submission.gameAddress,
         submission.score,
-        30 // Default game duration in seconds
+        submission.transactions
       );
       
       console.log('📊 Score submission result:', {
         playerAddress: submission.playerAddress,
         gameAddress: submission.gameAddress,
         score: submission.score,
-        localSuccess: result.localSuccess,
-        blockchainSuccess: result.blockchainSuccess,
+        success: result.success,
+        transactionHash: result.transactionHash,
         error: result.error
       });
       
       if (result.success) {
-        console.log('✅ Score submitted successfully:', {
+        console.log('✅ Score submitted successfully to blockchain:', {
           score: submission.score,
-          localSuccess: result.localSuccess,
-          blockchainSuccess: result.blockchainSuccess
+          transactionHash: result.transactionHash,
+          gameWalletAddress: result.gameWalletAddress
         });
       } else {
-        console.warn('⚠️ Score submission partially failed:', result.error);
+        console.warn('⚠️ Score submission failed:', result.error);
       }
       
       // Wait a bit between submissions to avoid rate limiting
@@ -131,4 +136,47 @@ export function getQueueStatus() {
     pending: scoreQueue.length,
     isSubmitting
   };
+}
+
+// Submit score to secure API endpoint
+async function submitScoreToAPI(
+  playerAddress: string,
+  score: number,
+  transactions: number
+): Promise<ApiResponse> {
+  try {
+    console.log('🔐 Submitting score via secure API:', {
+      playerAddress,
+      score,
+      transactions
+    });
+
+    const response = await fetch('/api/submit-score', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        playerAddress,
+        score,
+        transactions
+      })
+    });
+
+    const result: ApiResponse = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || `HTTP error! status: ${response.status}`);
+    }
+
+    console.log('✅ API response received:', result);
+    return result;
+
+  } catch (error: any) {
+    console.error('❌ API submission failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to submit score via API'
+    };
+  }
 }
