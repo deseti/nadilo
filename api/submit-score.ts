@@ -32,11 +32,17 @@ export default async function handler(
   }
 
   try {
+    console.log('🎯 API /submit-score called with method:', req.method);
+    console.log('📥 Request body:', req.body);
+    
     // Extract data from request body
     const { playerAddress, score, transactions } = req.body;
 
+    console.log('📊 Extracted data:', { playerAddress, score, transactions });
+
     // Validate required fields
     if (!playerAddress || typeof score !== 'number' || typeof transactions !== 'number') {
+      console.log('❌ Validation failed:', { playerAddress, score, transactions });
       return res.status(400).json({
         success: false,
         error: 'Missing or invalid required fields: playerAddress, score, transactions'
@@ -62,6 +68,12 @@ export default async function handler(
 
     // Check if private key exists in environment variables
     const privateKey = process.env.WALLET_PRIVATE_KEY;
+    console.log('🔑 Environment check:', {
+      hasWalletKey: !!privateKey,
+      keyLength: privateKey ? privateKey.length : 0,
+      keyPrefix: privateKey ? privateKey.substring(0, 4) + '...' : 'none'
+    });
+    
     if (!privateKey) {
       console.error('❌ WALLET_PRIVATE_KEY not found in environment variables');
       return res.status(500).json({
@@ -76,10 +88,6 @@ export default async function handler(
       transactions,
       timestamp: new Date().toISOString()
     });
-
-    // Temporarily set the environment variable for the blockchain function
-    // This is needed because the monadContract.ts still expects VITE_WALLET_PRIVATE_KEY
-    process.env.VITE_WALLET_PRIVATE_KEY = privateKey;
 
     // Call the blockchain function
     const result = await updatePlayerDataWithGameWallet(
