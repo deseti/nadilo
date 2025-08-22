@@ -1,13 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Import the blockchain functions - try different import approaches
+// Import the blockchain functions using dynamic import
 let updatePlayerDataWithGameWallet: any;
 
-try {
-  const monadContract = require('../src/lib/monadContract');
-  updatePlayerDataWithGameWallet = monadContract.updatePlayerDataWithGameWallet;
-} catch (importError) {
-  console.error('❌ Failed to import monadContract:', importError);
+async function loadMonadContract() {
+  try {
+    const monadContract = await import('../src/lib/monadContract');
+    return monadContract.updatePlayerDataWithGameWallet;
+  } catch (importError) {
+    console.error('❌ Failed to import monadContract:', importError);
+    return null;
+  }
 }
 
 export default async function handler(
@@ -57,7 +60,9 @@ export default async function handler(
       });
     }
 
-    // Check if the function was imported successfully
+    // Load the blockchain function dynamically
+    updatePlayerDataWithGameWallet = await loadMonadContract();
+    
     if (!updatePlayerDataWithGameWallet) {
       console.error('❌ updatePlayerDataWithGameWallet function not available');
       return res.status(500).json({
