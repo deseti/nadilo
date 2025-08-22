@@ -40,15 +40,15 @@ export function createWalletClientFromProvider() {
 
 // Function to create wallet client from private key (for game operations)
 export function createGameWalletClient() {
-  // Use WALLET_PRIVATE_KEY for both server-side (API) and client-side
-  const privateKey = process.env.WALLET_PRIVATE_KEY || (typeof import.meta !== 'undefined' && (import.meta as any).env ? (import.meta as any).env.WALLET_PRIVATE_KEY : undefined);
+  // Use VITE_WALLET_PRIVATE_KEY for client-side access
+  const privateKey = process.env.VITE_WALLET_PRIVATE_KEY || import.meta.env.VITE_WALLET_PRIVATE_KEY;
 
   if (!privateKey) {
-    throw new Error('WALLET_PRIVATE_KEY not found in environment variables. Please check your .env file or Vercel environment variables.');
+    throw new Error('VITE_WALLET_PRIVATE_KEY not found in environment variables. Please check your .env file or Vercel environment variables.');
   }
 
   if (!privateKey.startsWith('0x')) {
-    throw new Error('WALLET_PRIVATE_KEY must start with 0x');
+    throw new Error('VITE_WALLET_PRIVATE_KEY must start with 0x');
   }
 
   try {
@@ -74,7 +74,7 @@ export function createGameWalletClient() {
     return { walletClient, account };
   } catch (error) {
     console.error('❌ Error creating game wallet:', error);
-    throw new Error('Invalid WALLET_PRIVATE_KEY format');
+    throw new Error('Invalid VITE_WALLET_PRIVATE_KEY format');
   }
 }
 

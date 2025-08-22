@@ -354,24 +354,7 @@ function App() {
                   >
                     🔍 Debug Auto Submit
                   </button>
-                  <button
-                    onClick={async () => {
-                      const { testAPIEndpoint } = await import('./utils/testAPI');
-                      await testAPIEndpoint();
-                    }}
-                    style={{
-                      background: '#9B59B6',
-                      border: '1px solid #9B59B6',
-                      color: '#fff',
-                      padding: '5px 10px',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '11px',
-                      marginLeft: '5px'
-                    }}
-                  >
-                    🌐 Test API
-                  </button>
+
                 </div>
                 <p style={{ margin: '8px 0 0 0', color: '#888', fontSize: '10px' }}>
                   Wallet: {effectivePlayerAddress || monadWalletAddress} | Game: {gameAddress}

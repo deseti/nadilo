@@ -72,7 +72,7 @@ export async function testBlockchainSubmission(playerAddress: string) {
 export function testEnvironmentVariables() {
   console.log('🔧 Testing environment variables...');
   
-  const privateKey = import.meta.env.WALLET_PRIVATE_KEY;
+  const privateKey = import.meta.env.VITE_WALLET_PRIVATE_KEY;
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const privyAppId = import.meta.env.VITE_PRIVY_APP_ID;
   

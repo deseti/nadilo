@@ -113,7 +113,7 @@ export class ScoreRelay {
       
       // Check for specific error types
       if (error instanceof Error) {
-        if (error.message.includes('WALLET_PRIVATE_KEY')) {
+        if (error.message.includes('VITE_WALLET_PRIVATE_KEY')) {
           throw new Error('GAME_WALLET_NOT_CONFIGURED: Private key not found in environment');
         } else if (error.message.includes('Invalid player address')) {
           throw new Error('INVALID_PLAYER_ADDRESS: Player address format is invalid');
@@ -233,7 +233,7 @@ export class ScoreRelay {
   private static getErrorMessage(error: any): string {
     if (typeof error === 'string') {
       if (error.includes('GAME_WALLET_NOT_CONFIGURED')) {
-        return 'Game wallet not configured. Check WALLET_PRIVATE_KEY in environment.';
+        return 'Game wallet not configured. Check VITE_WALLET_PRIVATE_KEY in environment.';
       }
       if (error.includes('INSUFFICIENT_FUNDS')) {
         return 'Game wallet needs MON tokens for gas fees.';
@@ -245,7 +245,7 @@ export class ScoreRelay {
 
     if (error instanceof Error) {
       if (error.message.includes('GAME_WALLET_NOT_CONFIGURED')) {
-        return 'Game wallet not configured. Check WALLET_PRIVATE_KEY in environment.';
+        return 'Game wallet not configured. Check VITE_WALLET_PRIVATE_KEY in environment.';
       }
       if (error.message.includes('INSUFFICIENT_FUNDS')) {
         return 'Game wallet needs MON tokens for gas fees.';
@@ -256,7 +256,7 @@ export class ScoreRelay {
       if (error.message.includes('insufficient funds')) {
         return 'Game wallet needs MON tokens for gas fees.';
       }
-      if (error.message.includes('Invalid WALLET_PRIVATE_KEY')) {
+      if (error.message.includes('Invalid VITE_WALLET_PRIVATE_KEY')) {
         return 'Invalid private key format in environment.';
       }
     }

@@ -14,7 +14,7 @@ export async function debugMonadIntegration(walletAddress: string, gameAddress: 
         let gameWalletHasRole = false;
         
         try {
-            // Try to create game wallet client (will work in development with WALLET_PRIVATE_KEY)
+            // Try to create game wallet client (will work in development with VITE_WALLET_PRIVATE_KEY)
             const { createGameWalletClient } = await import('../lib/monadContract');
             const { account } = createGameWalletClient();
             gameWalletAddress = account.address;
