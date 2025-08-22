@@ -192,7 +192,7 @@ async function submitScoreDirectly(
     console.log('📤 Sending transaction:', transaction);
 
     // Send transaction
-    const hash = await walletClient.sendTransaction(transaction);
+    const hash = await walletClient.sendTransaction(transaction as any);
     console.log('📤 Transaction sent:', hash);
 
     // Wait for confirmation

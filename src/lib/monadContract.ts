@@ -29,10 +29,10 @@ export const publicClient = createPublicClient({
 
 // Function to create wallet client from window.ethereum (MetaMask/wallet provider)
 export function createWalletClientFromProvider() {
-  if (typeof window !== 'undefined' && window.ethereum) {
+  if (typeof window !== 'undefined' && (window as any).ethereum) {
     return createWalletClient({
       chain: monadTestnet,
-      transport: custom(window.ethereum as any),
+      transport: custom((window as any).ethereum),
     });
   }
   throw new Error('No wallet provider found');
@@ -41,7 +41,7 @@ export function createWalletClientFromProvider() {
 // Function to create wallet client from private key (for game operations)
 export function createGameWalletClient() {
   // Use WALLET_PRIVATE_KEY for both server-side (API) and client-side
-  const privateKey = process.env.WALLET_PRIVATE_KEY || import.meta.env.WALLET_PRIVATE_KEY;
+  const privateKey = process.env.WALLET_PRIVATE_KEY || (typeof import.meta !== 'undefined' && (import.meta as any).env ? (import.meta as any).env.WALLET_PRIVATE_KEY : undefined);
 
   if (!privateKey) {
     throw new Error('WALLET_PRIVATE_KEY not found in environment variables. Please check your .env file or Vercel environment variables.');
@@ -261,7 +261,7 @@ async function submitScoreWithRawTransaction(
     console.log('📤 Sending raw transaction:', transaction);
 
     // Send transaction
-    const hash = await walletClient.sendTransaction(transaction);
+    const hash = await walletClient.sendTransaction(transaction as any);
     console.log('📤 Transaction sent:', hash);
 
     // Wait for transaction confirmation
