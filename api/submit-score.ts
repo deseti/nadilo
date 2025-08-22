@@ -1,7 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Import the blockchain functions
-import { updatePlayerDataWithGameWallet } from '../src/lib/monadContract';
+// Import the blockchain functions - try different import approaches
+let updatePlayerDataWithGameWallet: any;
+
+try {
+  const monadContract = require('../src/lib/monadContract');
+  updatePlayerDataWithGameWallet = monadContract.updatePlayerDataWithGameWallet;
+} catch (importError) {
+  console.error('❌ Failed to import monadContract:', importError);
+}
 
 export default async function handler(
   req: VercelRequest,
@@ -32,6 +39,15 @@ export default async function handler(
       return res.status(400).json({
         success: false,
         error: 'Invalid player address format'
+      });
+    }
+
+    // Check if the function was imported successfully
+    if (!updatePlayerDataWithGameWallet) {
+      console.error('❌ updatePlayerDataWithGameWallet function not available');
+      return res.status(500).json({
+        success: false,
+        error: 'Server configuration error: Blockchain function not available'
       });
     }
 

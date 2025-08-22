@@ -163,7 +163,23 @@ async function submitScoreToAPI(
       })
     });
 
-    const result: ApiResponse = await response.json();
+    console.log('📡 API Response status:', response.status, response.statusText);
+
+    // Check if response has content
+    const responseText = await response.text();
+    console.log('📡 API Response text:', responseText);
+
+    if (!responseText) {
+      throw new Error(`Empty response from API. Status: ${response.status}`);
+    }
+
+    let result: ApiResponse;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('❌ Failed to parse JSON response:', parseError);
+      throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+    }
 
     if (!response.ok) {
       throw new Error(result.error || `HTTP error! status: ${response.status}`);
