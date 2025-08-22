@@ -151,7 +151,7 @@ async function submitScoreToAPI(
       transactions
     });
 
-    const response = await fetch('/api/submit-score', {
+    const response = await fetch('/api/submit-score-simple', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
