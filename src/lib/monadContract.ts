@@ -41,9 +41,19 @@ export function createWalletClientFromProvider() {
 // Function to create wallet client from private key (for game operations)
 export function createGameWalletClient() {
   // Use VITE_WALLET_PRIVATE_KEY for client-side access
-  const privateKey = process.env.VITE_WALLET_PRIVATE_KEY || import.meta.env.VITE_WALLET_PRIVATE_KEY;
+  // In production (Vercel), use import.meta.env, in development use either
+  const privateKey = import.meta.env.VITE_WALLET_PRIVATE_KEY;
+
+  console.log('🔑 Checking private key availability:', {
+    hasPrivateKey: !!privateKey,
+    keyLength: privateKey ? privateKey.length : 0,
+    startsWithOx: privateKey ? privateKey.startsWith('0x') : false,
+    environment: import.meta.env.MODE || 'unknown'
+  });
 
   if (!privateKey) {
+    console.error('❌ VITE_WALLET_PRIVATE_KEY not found in environment variables');
+    console.log('Available env vars:', Object.keys(import.meta.env));
     throw new Error('VITE_WALLET_PRIVATE_KEY not found in environment variables. Please check your .env file or Vercel environment variables.');
   }
 

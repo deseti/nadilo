@@ -354,6 +354,30 @@ function App() {
                   >
                     🔍 Debug Auto Submit
                   </button>
+                  <button
+                    onClick={async () => {
+                      const { debugEnvironmentVariables, testScoreSubmission } = await import('./utils/debugEnvironment');
+                      const envResult = debugEnvironmentVariables();
+                      console.log('Environment debug result:', envResult);
+                      
+                      if (effectivePlayerAddress) {
+                        const testResult = await testScoreSubmission(effectivePlayerAddress);
+                        console.log('Score submission test result:', testResult);
+                      }
+                    }}
+                    style={{
+                      background: '#8E44AD',
+                      border: '1px solid #8E44AD',
+                      color: '#fff',
+                      padding: '5px 10px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      marginLeft: '5px'
+                    }}
+                  >
+                    🔧 Debug Environment
+                  </button>
 
                 </div>
                 <p style={{ margin: '8px 0 0 0', color: '#888', fontSize: '10px' }}>

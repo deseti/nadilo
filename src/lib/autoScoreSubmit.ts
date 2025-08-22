@@ -73,8 +73,8 @@ async function processScoreQueue() {
     try {
       console.log('📊 Processing score submission:', submission);
       
-      // Submit score via secure API endpoint
-      const result = await submitScoreToAPI(
+      // Submit score directly to blockchain using game wallet
+      const result = await submitScoreDirectly(
         submission.playerAddress,
         submission.score,
         submission.transactions
@@ -138,61 +138,54 @@ export function getQueueStatus() {
   };
 }
 
-// Submit score to secure API endpoint
-async function submitScoreToAPI(
+// Submit score directly to blockchain using game wallet
+async function submitScoreDirectly(
   playerAddress: string,
   score: number,
   transactions: number
 ): Promise<ApiResponse> {
   try {
-    console.log('🔐 Submitting score via secure API:', {
+    console.log('🔐 Submitting score directly to blockchain:', {
       playerAddress,
       score,
       transactions
     });
 
-    const response = await fetch('/api/submit-score-cjs', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        playerAddress,
-        score,
-        transactions
-      })
-    });
+    // Import the blockchain function
+    const { updatePlayerDataWithGameWallet } = await import('./monadContract');
 
-    console.log('📡 API Response status:', response.status, response.statusText);
+    // Submit directly to blockchain
+    const result = await updatePlayerDataWithGameWallet(
+      playerAddress,
+      score,
+      transactions
+    );
 
-    // Check if response has content
-    const responseText = await response.text();
-    console.log('📡 API Response text:', responseText);
+    console.log('✅ Direct blockchain submission result:', result);
 
-    if (!responseText) {
-      throw new Error(`Empty response from API. Status: ${response.status}`);
-    }
-
-    let result: ApiResponse;
-    try {
-      result = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('❌ Failed to parse JSON response:', parseError);
-      throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
-    }
-
-    if (!response.ok) {
-      throw new Error(result.error || `HTTP error! status: ${response.status}`);
-    }
-
-    console.log('✅ API response received:', result);
-    return result;
+    return {
+      success: result.success,
+      transactionHash: result.transactionHash,
+      gameWalletAddress: result.gameWalletAddress
+    };
 
   } catch (error: any) {
-    console.error('❌ API submission failed:', error);
+    console.error('❌ Direct blockchain submission failed:', error);
+    
+    // Handle specific error types
+    let errorMessage = error.message || 'Failed to submit score to blockchain';
+    
+    if (errorMessage.includes('VITE_WALLET_PRIVATE_KEY')) {
+      errorMessage = 'Game wallet not configured. Check VITE_WALLET_PRIVATE_KEY in environment.';
+    } else if (errorMessage.includes('insufficient funds')) {
+      errorMessage = 'Game wallet needs MON tokens for gas fees.';
+    } else if (errorMessage.includes('Invalid player address')) {
+      errorMessage = 'Invalid player address format.';
+    }
+
     return {
       success: false,
-      error: error.message || 'Failed to submit score via API'
+      error: errorMessage
     };
   }
 }
