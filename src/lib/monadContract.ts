@@ -40,10 +40,11 @@ export function createWalletClientFromProvider() {
 
 // Function to create wallet client from private key (for game operations)
 export function createGameWalletClient() {
-  const privateKey = import.meta.env.VITE_WALLET_PRIVATE_KEY;
-  
+  // Try server-side environment variable first (for API calls), then client-side (for development)
+  const privateKey = process.env.VITE_WALLET_PRIVATE_KEY || import.meta.env.VITE_WALLET_PRIVATE_KEY;
+
   if (!privateKey) {
-    throw new Error('VITE_WALLET_PRIVATE_KEY not found in environment variables');
+    throw new Error('VITE_WALLET_PRIVATE_KEY not found in environment variables. Please check your .env file or Vercel environment variables.');
   }
 
   if (!privateKey.startsWith('0x')) {
@@ -52,13 +53,13 @@ export function createGameWalletClient() {
 
   try {
     const account = privateKeyToAccount(privateKey as `0x${string}`);
-    
+
     // Try different RPC endpoints for better compatibility
     const rpcUrls = [
       'https://testnet-rpc.monad.xyz',
       'https://rpc.monad.xyz', // Alternative RPC
     ];
-    
+
     const walletClient = createWalletClient({
       account,
       chain: monadTestnet,
@@ -86,7 +87,7 @@ export async function getPlayerData(gameAddress: string, playerAddress: string) 
       functionName: 'playerDataPerGame',
       args: [gameAddress, playerAddress],
     }) as [bigint, bigint];
-    
+
     return {
       score: Number(result[0]),
       transactions: Number(result[1]),
@@ -106,7 +107,7 @@ export async function getTotalPlayerScore(playerAddress: string) {
       functionName: 'totalScoreOfPlayer',
       args: [playerAddress],
     }) as bigint;
-    
+
     return Number(result);
   } catch (error) {
     console.error('Error reading total player score:', error);
@@ -116,8 +117,8 @@ export async function getTotalPlayerScore(playerAddress: string) {
 
 // Function to update player data (submit score to blockchain)
 export async function updatePlayerData(
-  playerAddress: string, 
-  scoreAmount: number, 
+  playerAddress: string,
+  scoreAmount: number,
   transactionAmount: number
 ) {
   try {
@@ -130,7 +131,7 @@ export async function updatePlayerData(
 
     const walletClient = createWalletClientFromProvider();
     const [account] = await walletClient.getAddresses();
-    
+
     if (!account) {
       throw new Error('No wallet account found');
     }
@@ -155,12 +156,12 @@ export async function updatePlayerData(
     console.log('Simulation successful, executing transaction...');
     const hash = await walletClient.writeContract(request);
     console.log('Transaction sent:', hash);
-    
+
     // Tunggu transaksi selesai
     console.log('Waiting for transaction confirmation...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     console.log('Transaction confirmed:', receipt);
-    
+
     return {
       success: true,
       transactionHash: hash,
@@ -168,7 +169,7 @@ export async function updatePlayerData(
     };
   } catch (error: any) {
     console.error('Error updating player data:', error);
-    
+
     // Log more detailed error information
     if (error.cause) {
       console.error('Error cause:', error.cause);
@@ -176,15 +177,15 @@ export async function updatePlayerData(
     if (error.details) {
       console.error('Error details:', error.details);
     }
-    
+
     throw error;
   }
 }
 
 // Function to update player data using game wallet (private key from .env)
 export async function updatePlayerDataWithGameWallet(
-  playerAddress: string, 
-  scoreAmount: number, 
+  playerAddress: string,
+  scoreAmount: number,
   transactionAmount: number
 ) {
   try {
@@ -202,7 +203,7 @@ export async function updatePlayerDataWithGameWallet(
 
     // Try alternative approach using raw transaction
     return await submitScoreWithRawTransaction(playerAddress, scoreAmount, transactionAmount);
-    
+
   } catch (error) {
     console.error('❌ Error updating player data with game wallet:', error);
     const errorObj = error as any;
@@ -212,7 +213,7 @@ export async function updatePlayerDataWithGameWallet(
     if (errorObj?.details) {
       console.error('Error details:', errorObj.details);
     }
-    
+
     throw error;
   }
 }
@@ -225,14 +226,14 @@ async function submitScoreWithRawTransaction(
 ) {
   try {
     console.log('🔄 Trying raw transaction approach...');
-    
+
     // Create game wallet client from private key
     const { walletClient, account } = createGameWalletClient();
     console.log('🔑 Game wallet address:', account.address);
 
     // Encode the function call data manually
     const { encodeFunctionData } = await import('viem');
-    
+
     const data = encodeFunctionData({
       abi: MONAD_LEADERBOARD_ABI,
       functionName: 'updatePlayerData',
@@ -244,7 +245,7 @@ async function submitScoreWithRawTransaction(
     // Get current gas price and nonce
     const gasPrice = await publicClient.getGasPrice();
     const nonce = await publicClient.getTransactionCount({ address: account.address });
-    
+
     console.log('⛽ Gas price:', gasPrice, 'Nonce:', nonce);
 
     // Create transaction with minimal parameters
@@ -256,28 +257,28 @@ async function submitScoreWithRawTransaction(
       nonce,
       value: 0n,
     };
-    
+
     console.log('📤 Sending raw transaction:', transaction);
-    
+
     // Send transaction
     const hash = await walletClient.sendTransaction(transaction);
     console.log('📤 Transaction sent:', hash);
-    
+
     // Wait for transaction confirmation
     console.log('⏳ Waiting for transaction confirmation...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     console.log('✅ Transaction confirmed:', receipt);
-    
+
     return {
       success: true,
       transactionHash: hash,
       receipt,
       gameWalletAddress: account.address
     };
-    
+
   } catch (error) {
     console.error('❌ Raw transaction failed:', error);
-    
+
     // Log more detailed error information
     const errorObj = error as any;
     if (errorObj?.cause) {
@@ -286,15 +287,15 @@ async function submitScoreWithRawTransaction(
     if (errorObj?.details) {
       console.error('Error details:', errorObj.details);
     }
-    
+
     throw error;
   }
 }
 
 // Function to update player data using Privy embedded wallet
 export async function updatePlayerDataWithPrivy(
-  playerAddress: string, 
-  scoreAmount: number, 
+  playerAddress: string,
+  scoreAmount: number,
   transactionAmount: number,
   privyWallet: any // Privy wallet object
 ) {
@@ -315,7 +316,7 @@ export async function updatePlayerDataWithPrivy(
     // Create wallet client from Privy embedded wallet
     const walletClient = await privyWallet.getEthereumProvider();
     const ethereumProvider = walletClient;
-    
+
     // Create viem wallet client
     const viemWalletClient = createWalletClient({
       chain: monadTestnet,
@@ -341,12 +342,12 @@ export async function updatePlayerDataWithPrivy(
       account
     });
     console.log('Transaction sent:', hash);
-    
+
     // Tunggu transaksi selesai
     console.log('Waiting for transaction confirmation...');
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     console.log('Transaction confirmed:', receipt);
-    
+
     return {
       success: true,
       transactionHash: hash,
@@ -354,7 +355,7 @@ export async function updatePlayerDataWithPrivy(
     };
   } catch (error: any) {
     console.error('Error updating player data with Privy:', error);
-    
+
     // Log more detailed error information
     if (error.cause) {
       console.error('Error cause:', error.cause);
@@ -362,7 +363,7 @@ export async function updatePlayerDataWithPrivy(
     if (error.details) {
       console.error('Error details:', error.details);
     }
-    
+
     throw error;
   }
 }
@@ -377,7 +378,7 @@ export async function registerGame(
   try {
     const walletClient = createWalletClientFromProvider();
     const [account] = await walletClient.getAddresses();
-    
+
     if (!account) {
       throw new Error('No wallet account found');
     }
@@ -392,7 +393,7 @@ export async function registerGame(
 
     const hash = await walletClient.writeContract(request);
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    
+
     return {
       success: true,
       transactionHash: hash,

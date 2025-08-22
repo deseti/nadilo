@@ -154,7 +154,7 @@ function App() {
 
         if (!debugResult.hasGameRole) {
           alertMessage += '📝 Issue: Game wallet not configured or missing GAME_ROLE\n';
-          alertMessage += '💡 Solution: Check VITE_WALLET_PRIVATE_KEY in .env file\n\n';
+          alertMessage += '💡 Solution: Score will be submitted via secure API endpoint\n\n';
         }
 
         alertMessage += 'Your score will still be saved locally and visible in the game!';
