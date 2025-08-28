@@ -11,9 +11,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -22,6 +24,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -40,6 +43,7 @@
 .read-the-docs {
   color: #888;
 }
+
 /* Game specific styles */
 .game-wrapper {
   display: flex;
@@ -67,17 +71,17 @@
     padding: 1rem;
     max-width: 100%;
   }
-  
+
   .game-wrapper {
     flex-direction: column;
     gap: 15px;
     padding: 0 5px;
   }
-  
+
   .container {
     padding: 10px;
   }
-  
+
   .header h1 {
     font-size: 1.8rem;
   }
@@ -239,40 +243,40 @@
     padding: 15px;
     gap: 10px;
   }
-  
+
   .phaser-game {
     width: 100% !important;
     max-width: 100% !important;
   }
-  
+
   .phaser-game canvas {
     width: 100% !important;
     height: auto !important;
     max-width: 100% !important;
   }
-  
+
   .game-ui {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .game-info {
     min-width: auto;
   }
-  
+
   .game-info h3 {
     font-size: 20px;
   }
-  
+
   .game-info p {
     font-size: 12px;
   }
-  
+
   .game-info ul {
     font-size: 11px;
     padding-left: 15px;
   }
-  
+
   .mobile-controls {
     display: block;
   }
@@ -283,24 +287,24 @@
     padding: 10px;
     margin: 5px;
   }
-  
+
   .virtual-joystick {
     width: 100px;
     height: 100px;
     bottom: 15px;
     left: 15px;
   }
-  
+
   .joystick-knob {
     width: 35px;
     height: 35px;
   }
-  
+
   .mobile-buttons {
     bottom: 15px;
     right: 15px;
   }
-  
+
   .mobile-btn {
     width: 50px;
     height: 50px;
@@ -314,12 +318,53 @@
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 .header h1 {
   background: linear-gradient(45deg, #00ff88, #00cc66);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-}/* Leader
+  margin: 0;
+}
+
+.github-link {
+  color: #ffffff;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.github-link:hover {
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+  border-color: #00ff88;
+  transform: translateY(-2px);
+}
+
+.github-link svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Leader
 board Styles */
 .leaderboard {
   background: #1a1a2e;
@@ -382,7 +427,9 @@ board Styles */
   font-weight: bold;
 }
 
-.test-btn, .refresh-btn, .retry-btn {
+.test-btn,
+.refresh-btn,
+.retry-btn {
   background: #00ff88;
   color: #000;
   border: none;
@@ -393,7 +440,9 @@ board Styles */
   font-size: 14px;
 }
 
-.test-btn:hover, .refresh-btn:hover, .retry-btn:hover {
+.test-btn:hover,
+.refresh-btn:hover,
+.retry-btn:hover {
   background: #00cc66;
 }
 
@@ -417,10 +466,10 @@ board Styles */
 .monad-status {
   font-size: 0.9rem;
   color: #f0f0f0;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   padding: 5px 10px;
   border-radius: 15px;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .player-id {
@@ -460,6 +509,7 @@ board Styles */
   background: linear-gradient(135deg, #444 0%, #666 100%);
   color: white;
 }
+
 /* Mo
 bile leaderboard adjustments */
 @media (max-width: 768px) {
@@ -468,25 +518,25 @@ bile leaderboard adjustments */
     margin: 15px 0;
     max-width: 100%;
   }
-  
+
   .leaderboard-entry {
     grid-template-columns: 30px 1fr 70px 50px;
     gap: 8px;
     padding: 8px;
   }
-  
+
   .leaderboard-entry .rank {
     font-size: 14px;
   }
-  
+
   .leaderboard-entry .name {
     font-size: 14px;
   }
-  
+
   .leaderboard-entry .score {
     font-size: 14px;
   }
-  
+
   .leaderboard-entry .best {
     font-size: 10px;
   }
@@ -497,29 +547,29 @@ bile leaderboard adjustments */
     padding: 10px;
     margin: 10px 0;
   }
-  
+
   .leaderboard h3 {
     font-size: 18px;
   }
-  
+
   .leaderboard-entry {
     grid-template-columns: 25px 1fr 60px 40px;
     gap: 5px;
     padding: 6px;
   }
-  
+
   .leaderboard-entry .rank {
     font-size: 12px;
   }
-  
+
   .leaderboard-entry .name {
     font-size: 12px;
   }
-  
+
   .leaderboard-entry .score {
     font-size: 12px;
   }
-  
+
   .leaderboard-entry .best {
     font-size: 9px;
   }
@@ -527,31 +577,50 @@ bile leaderboard adjustments */
 
 /* Additional mobile optimizations */
 @media (max-width: 768px) {
+  .header-content {
+    gap: 15px;
+  }
+
+  .header h1 {
+    font-size: 1.8rem;
+  }
+
+  .github-link {
+    padding: 6px;
+  }
+
+  .github-link svg {
+    width: 20px;
+    height: 20px;
+  }
+
   .user-info {
     align-items: center;
     text-align: center;
   }
-  
+
   .monad-status {
     font-size: 0.8rem;
     padding: 4px 8px;
   }
-  
+
   .player-id {
     font-size: 0.7rem;
   }
-  
+
   .logout-button {
     padding: 6px 12px;
     font-size: 14px;
   }
-  
+
   .login-options {
     gap: 8px;
     margin: 15px 0;
   }
-  
-  .test-btn, .refresh-btn, .retry-btn {
+
+  .test-btn,
+  .refresh-btn,
+  .retry-btn {
     padding: 6px 12px;
     font-size: 12px;
     margin: 3px;
